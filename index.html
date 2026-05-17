@@ -67,8 +67,8 @@
         }
 
         /* ── 탭 패널 ── */
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
+        .tab-panel { display: none !important; }
+        .tab-panel.active { display: block !important; }
 
         /* ── 메인 래퍼 ── */
         .main-wrap {
@@ -384,7 +384,8 @@
 
         <div class="modal-field">
             <label class="modal-label">날짜 선택</label>
-            <input type="date" id="modal-date-picker" class="modal-input" onchange="onModalDateChange()">
+            <input type="date" id="modal-date-picker" onchange="onModalDateChange()"
+                style="width:100%;max-width:100%;box-sizing:border-box;background:#f3f1fb;border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:14px;font-weight:700;color:var(--text-main);outline:none;font-family:'Nunito',sans-serif;text-align:center;-webkit-appearance:none;appearance:none;display:block;">
         </div>
 
         <div class="modal-field">
