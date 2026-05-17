@@ -379,8 +379,8 @@
 <!-- 모달 -->
 <div id="edit-modal">
     <div class="modal-box">
-        <p class="modal-title" id="modal-task-title">기록 수정</p>
-        <p class="modal-sub">직접 분 단위로 기록을 수정할 수 있습니다.</p>
+        <p class="modal-title" id="modal-task-title">시간 추가</p>
+        <p class="modal-sub">스탑워치로 재지 않은 시간을 추가합니다.</p>
 
         <div class="modal-field">
             <label class="modal-label">날짜 선택</label>
@@ -389,7 +389,7 @@
         </div>
 
         <div class="modal-field">
-            <label class="modal-label">최종 집중 시간 (분)</label>
+            <label class="modal-label">추가할 시간 (분)</label>
             <div class="time-row">
                 <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="0"
                     onfocus="this.select()"
@@ -623,7 +623,7 @@
     // ── 모달 ──
     function openEditModal(taskId, taskName) {
         modalActiveTaskId = taskId;
-        document.getElementById('modal-task-title').textContent = '[' + taskName + '] 시간 수정';
+        document.getElementById('modal-task-title').textContent = '[' + taskName + '] 시간 추가';
         document.getElementById('modal-date-picker').value = getTodayString();
         onModalDateChange();
         document.getElementById('edit-modal').classList.add('open');
@@ -633,21 +633,17 @@
         modalActiveTaskId = null;
     }
     function onModalDateChange() {
-        var date = document.getElementById('modal-date-picker').value;
-        if (!date) return;
-        var secs = (timeLogs[date] || {})[modalActiveTaskId] || 0;
-        document.getElementById('modal-time-input').value = Math.round(secs / 60);
+        document.getElementById('modal-time-input').value = '';
     }
     function saveModalChanges() {
         var date = document.getElementById('modal-date-picker').value;
         var mins = parseInt(document.getElementById('modal-time-input').value, 10);
-        if (!date || isNaN(mins) || mins < 0 || !userId) return;
+        if (!date || isNaN(mins) || mins <= 0 || !userId) return;
         var ref = db.collection('users').doc(userId).collection('logs').doc(date);
         db.runTransaction(function(tx) {
             return tx.get(ref).then(function(doc) {
                 var data = doc.exists ? doc.data() : {};
-                if (mins === 0) delete data[modalActiveTaskId];
-                else data[modalActiveTaskId] = mins * 60;
+                data[modalActiveTaskId] = (typeof data[modalActiveTaskId] === 'number' ? data[modalActiveTaskId] : 0) + (mins * 60);
                 tx.set(ref, data);
             });
         }).then(function() { closeModal(); });
