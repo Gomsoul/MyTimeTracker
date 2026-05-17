@@ -228,8 +228,12 @@
     }
     .modal-input:focus { border-color: var(--accent); }
     .modal-input[type="date"] {
-      max-width: 100%; cursor: pointer;
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      cursor: pointer;
       -webkit-appearance: none;
+      appearance: none;
     }
     .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
     .btn-cancel {
@@ -523,11 +527,25 @@ function dateKo(d) {
 
 // ── TAB ──
 function showTab(tab) {
-  document.getElementById('trackerPanel').style.display = (tab === 'tracker') ? 'block' : 'none';
-  document.getElementById('reportPanel').style.display  = (tab === 'report')  ? 'block' : 'none';
-  document.getElementById('tabTrackerBtn').classList.toggle('active', tab === 'tracker');
-  document.getElementById('tabReportBtn').classList.toggle('active',  tab === 'report');
-  if (tab === 'report') renderReport();
+  var tracker = document.getElementById('trackerPanel');
+  var report  = document.getElementById('reportPanel');
+  var tBtn    = document.getElementById('tabTrackerBtn');
+  var rBtn    = document.getElementById('tabReportBtn');
+
+  // 명시적으로 둘 다 숨기고 하나만 표시
+  tracker.style.display = 'none';
+  report.style.display  = 'none';
+  tBtn.classList.remove('active');
+  rBtn.classList.remove('active');
+
+  if (tab === 'tracker') {
+    tracker.style.display = 'block';
+    tBtn.classList.add('active');
+  } else {
+    report.style.display = 'block';
+    rBtn.classList.add('active');
+    renderReport();
+  }
 }
 
 // ── AUTH & LOAD ──
@@ -829,8 +847,9 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── INIT ──
+// ── INIT: 모든 함수 선언 이후 실행 ──
 showTab('tracker');
+
 </script>
 </body>
 </html>
