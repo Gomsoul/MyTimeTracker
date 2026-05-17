@@ -389,7 +389,17 @@
         </div>
 
         <div class="modal-field">
-            <label class="modal-label">추가할 시간 (분)</label>
+            <label class="modal-label">추가/차감</label>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <button id="toggle-plus" onclick="setMode('plus')"
+                    style="flex:1;padding:9px;border-radius:10px;border:2px solid #B8EAC8;background:#B8EAC8;color:#206840;font-size:14px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">
+                    + 추가
+                </button>
+                <button id="toggle-minus" onclick="setMode('minus')"
+                    style="flex:1;padding:9px;border-radius:10px;border:2px solid #e4e2f0;background:#f3f1fb;color:#8884a8;font-size:14px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">
+                    − 차감
+                </button>
+            </div>
             <div class="time-row">
                 <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="0"
                     onfocus="this.select()"
@@ -626,6 +636,7 @@
         document.getElementById('modal-task-title').textContent = '[' + taskName + '] 시간 추가';
         document.getElementById('modal-date-picker').value = getTodayString();
         onModalDateChange();
+        setMode('plus');
         document.getElementById('edit-modal').classList.add('open');
     }
     function closeModal() {
@@ -635,6 +646,19 @@
     function onModalDateChange() {
         document.getElementById('modal-time-input').value = '';
     }
+    var modalMode = 'plus';
+    function setMode(mode) {
+        modalMode = mode;
+        var plusBtn = document.getElementById('toggle-plus');
+        var minusBtn = document.getElementById('toggle-minus');
+        if (mode === 'plus') {
+            plusBtn.style.background = '#B8EAC8'; plusBtn.style.borderColor = '#B8EAC8'; plusBtn.style.color = '#206840';
+            minusBtn.style.background = '#f3f1fb'; minusBtn.style.borderColor = '#e4e2f0'; minusBtn.style.color = '#8884a8';
+        } else {
+            minusBtn.style.background = '#F9A8B8'; minusBtn.style.borderColor = '#F9A8B8'; minusBtn.style.color = '#9a3050';
+            plusBtn.style.background = '#f3f1fb'; plusBtn.style.borderColor = '#e4e2f0'; plusBtn.style.color = '#8884a8';
+        }
+    }
     function saveModalChanges() {
         var date = document.getElementById('modal-date-picker').value;
         var mins = parseInt(document.getElementById('modal-time-input').value, 10);
@@ -643,7 +667,11 @@
         db.runTransaction(function(tx) {
             return tx.get(ref).then(function(doc) {
                 var data = doc.exists ? doc.data() : {};
-                data[modalActiveTaskId] = (typeof data[modalActiveTaskId] === 'number' ? data[modalActiveTaskId] : 0) + (mins * 60);
+                var current = typeof data[modalActiveTaskId] === 'number' ? data[modalActiveTaskId] : 0;
+                var delta = modalMode === 'plus' ? mins * 60 : -(mins * 60);
+                var result = current + delta;
+                if (result <= 0) delete data[modalActiveTaskId];
+                else data[modalActiveTaskId] = result;
                 tx.set(ref, data);
             });
         }).then(function() { closeModal(); });
