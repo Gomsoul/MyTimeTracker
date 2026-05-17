@@ -17,416 +17,296 @@
     <meta name="apple-mobile-web-app-title" content="마이 트래커">
     <meta name="theme-color" content="#9B8FD4">
     <style>
-        * { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
-        body {
-            background: #eef0f8;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
+        body { background: #eef0f8; min-height: 100vh; padding-bottom: 80px; margin: 0; }
 
-        /* 파스텔 팔레트 - 두 번째 이미지 기반 */
         :root {
-            --pastel-green:   #C5D98A;
-            --pastel-bluegray:#A0B4C8;
-            --pastel-blue:    #A8C8F0;
-            --pastel-red:     #E88A8A;
-            --pastel-purple:  #A899D8;
-            --pastel-peach:   #F0C4A0;
-            --pastel-pink:    #F4A0B8;
-            --pastel-teal:    #88D8CC;
-            --pastel-mint:    #90CCA8;
-            --pastel-mauve:   #C494C4;
-
-            --bg: #eef0f8;
-            --surface: #ffffff;
-            --nav-bg: #ffffff;
             --primary: #9B8FD4;
             --primary-light: #C4BCE8;
             --primary-btn: #B8AEE0;
             --text-main: #3a3560;
             --text-sub: #8884a8;
             --border: #e4e2f0;
+            --surface: #ffffff;
             --card-shadow: 0 2px 12px rgba(100,90,160,0.07);
         }
 
+        /* ── 네비 ── */
         nav {
-            background: var(--nav-bg);
+            background: #fff;
             box-shadow: 0 1px 0 var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 40;
+            position: sticky; top: 0; z-index: 40;
+        }
+        .nav-inner {
+            max-width: 480px; margin: 0 auto;
+            padding: 0 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 62px;
+        }
+        .nav-title {
+            font-size: 20px; font-weight: 900; color: var(--text-main);
+            display: flex; align-items: center; gap: 8px;
         }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* 탭 버튼 */
+        /* ── 탭 버튼 ── */
         .tab-group {
-            display: flex;
-            background: #ede9f8;
-            border-radius: 14px;
-            padding: 4px;
-            gap: 2px;
+            display: flex; background: #ede9f8;
+            border-radius: 14px; padding: 4px; gap: 2px;
         }
         .tab-btn {
-            padding: 7px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
+            padding: 7px 20px; border-radius: 10px;
+            font-size: 14px; font-weight: 700;
+            border: none; cursor: pointer;
+            color: var(--text-sub); background: transparent;
             transition: all 0.2s;
-            color: var(--text-sub);
-            background: transparent;
         }
         .tab-btn.active {
-            background: #ffffff;
-            color: var(--text-main);
+            background: #fff; color: var(--text-main);
             box-shadow: 0 1px 6px rgba(100,90,160,0.13);
         }
 
-        /* TODAY TOTAL 카드 */
-        .total-card {
-            background: linear-gradient(135deg, #b8b0e4 0%, #a0b8e8 100%);
-            border-radius: 22px;
-            padding: 24px 22px 20px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        .total-card::before {
-            content: '';
-            position: absolute;
-            top: -30px; right: -30px;
-            width: 120px; height: 120px;
-            background: rgba(255,255,255,0.12);
-            border-radius: 50%;
-        }
-        .total-card::after {
-            content: '';
-            position: absolute;
-            bottom: -20px; left: 60px;
-            width: 80px; height: 80px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 50%;
-        }
-        .total-label {
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            color: rgba(255,255,255,0.75);
-            margin-bottom: 4px;
-        }
-        .total-time {
-            font-size: 42px;
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.1;
-        }
-        .total-note {
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        /* ── 탭 패널 ── */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
-        /* 목표 추가 인풋 */
-        .add-card {
+        /* ── 메인 래퍼 ── */
+        .main-wrap {
+            max-width: 480px; margin: 0 auto;
+            padding: 20px 18px;
+        }
+        .stack { display: flex; flex-direction: column; gap: 16px; }
+
+        /* ── 카드 공통 ── */
+        .card {
             background: var(--surface);
             border-radius: 18px;
-            padding: 14px;
-            display: flex;
-            gap: 10px;
             box-shadow: var(--card-shadow);
             border: 1px solid var(--border);
+            padding: 16px;
         }
+
+        /* ── 추가 인풋 ── */
+        .add-row { display: flex; gap: 10px; }
         .add-input {
-            flex: 1;
-            background: #f3f1fb;
-            border: 1px solid #e0ddf5;
-            border-radius: 12px;
-            padding: 11px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
+            flex: 1; min-width: 0;
+            background: #f3f1fb; border: 1px solid #e0ddf5;
+            border-radius: 12px; padding: 11px 16px;
+            font-size: 14px; font-weight: 600; color: var(--text-main);
             outline: none;
-            transition: border 0.2s;
         }
         .add-input::placeholder { color: #b0aac8; font-weight: 500; }
         .add-input:focus { border-color: var(--primary); }
         .add-btn {
-            background: var(--primary-btn);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 11px 22px;
-            font-size: 14px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            white-space: nowrap;
+            flex-shrink: 0;
+            background: var(--primary-btn); color: white;
+            border: none; border-radius: 12px;
+            padding: 11px 22px; font-size: 14px; font-weight: 800;
+            cursor: pointer; white-space: nowrap;
         }
-        .add-btn:hover { background: var(--primary); }
-        .add-btn:active { transform: scale(0.97); }
+        .add-btn:active { opacity: 0.85; }
 
-        /* 태스크 카드 */
+        /* ── TODAY TOTAL ── */
+        .total-card {
+            background: linear-gradient(135deg, #b8b0e4 0%, #a0b8e8 100%);
+            border-radius: 22px; padding: 24px 22px 20px;
+            position: relative; overflow: hidden;
+        }
+        .total-card::before {
+            content: ''; position: absolute;
+            top: -30px; right: -30px;
+            width: 120px; height: 120px;
+            background: rgba(255,255,255,0.12); border-radius: 50%;
+        }
+        .total-label {
+            font-size: 11px; font-weight: 800;
+            letter-spacing: 0.12em; color: rgba(255,255,255,0.75); margin-bottom: 4px;
+        }
+        .total-time { font-size: 42px; font-weight: 900; color: #fff; line-height: 1.1; }
+        .total-note {
+            font-size: 12px; color: rgba(255,255,255,0.7);
+            margin-top: 10px; display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ── 섹션 타이틀 ── */
+        .section-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; }
+
+        /* ── 태스크 카드 ── */
         .task-card {
-            background: var(--surface);
-            border-radius: 18px;
+            background: var(--surface); border-radius: 18px;
             padding: 16px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border);
-            transition: box-shadow 0.2s, border 0.2s;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--card-shadow); border: 1px solid var(--border);
+            margin-bottom: 10px;
         }
-        .task-card.running {
-            border-color: var(--primary-light);
-            box-shadow: 0 2px 16px rgba(155,143,212,0.15);
-        }
-        .task-color-bar {
-            width: 5px;
-            height: 32px;
-            border-radius: 3px;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-        .task-name {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text-main);
-        }
-        .task-time {
-            font-size: 12px;
-            color: var(--text-sub);
-            margin-top: 2px;
-            font-weight: 600;
-        }
-        .task-time span {
-            font-weight: 700;
-            color: #7a72a8;
-        }
+        .task-card:last-child { margin-bottom: 0; }
+        .task-card.running { border-color: var(--primary-light); }
+        .task-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+        .task-bar { width: 5px; height: 32px; border-radius: 3px; margin-right: 12px; flex-shrink: 0; }
+        .task-name { font-size: 15px; font-weight: 800; color: var(--text-main); }
+        .task-time { font-size: 12px; color: var(--text-sub); margin-top: 2px; font-weight: 600; }
+        .task-actions { display: flex; align-items: center; gap: 6px; margin-left: 10px; flex-shrink: 0; }
 
-        /* 액션 버튼들 */
         .btn-icon {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
+            width: 36px; height: 36px; border-radius: 10px;
+            border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px;
-            transition: all 0.15s;
-            flex-shrink: 0;
+            font-size: 12px; flex-shrink: 0;
         }
-        .btn-edit {
-            background: #f3f1fb;
-            color: #a09ac0;
-        }
-        .btn-edit:hover { background: #e8e4f8; color: #7a72a8; }
-        .btn-delete {
-            background: #fdf0f0;
-            color: #e09090;
-        }
-        .btn-delete:hover { background: #fde0e0; color: #d06060; }
+        .btn-edit { background: #f3f1fb; color: #a09ac0; }
+        .btn-delete { background: #fdf0f0; color: #e09090; }
         .btn-play {
-            width: 44px; height: 36px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
+            width: 44px; height: 36px; border-radius: 10px;
+            border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            color: white;
-            transition: all 0.15s;
             flex-shrink: 0;
         }
-        .btn-play:active { transform: scale(0.95); }
 
-        /* 섹션 타이틀 */
-        .section-title {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text-main);
-            padding: 0 2px;
-        }
-
-        /* 빈 상태 */
+        /* ── 빈 상태 ── */
         .empty-state {
-            text-align: center;
-            padding: 48px 0;
-            color: var(--text-sub);
+            text-align: center; padding: 48px 0; color: var(--text-sub);
+            display: none;
         }
         .empty-state i { font-size: 36px; margin-bottom: 12px; display: block; }
         .empty-state p { font-size: 13px; font-weight: 600; line-height: 1.7; }
 
-        /* 로딩 */
+        /* ── 로딩 ── */
         #loading-screen {
-            position: fixed; inset: 0;
-            background: white; z-index: 50;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
+            position: fixed; inset: 0; background: white; z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .spinner {
             width: 44px; height: 44px;
-            border: 3px solid #e8e4f8;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 14px;
+            border: 3px solid #e8e4f8; border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 리포트 탭 */
-        .report-card {
-            background: var(--surface);
-            border-radius: 18px;
-            padding: 16px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border);
-        }
-        .stat-box {
-            background: #f3f1fb;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-        }
+        /* ── 리포트 ── */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+        .stat-box { background: #f3f1fb; border-radius: 12px; padding: 12px; text-align: center; }
         .stat-label { font-size: 11px; color: var(--text-sub); font-weight: 600; margin-bottom: 3px; }
         .stat-value { font-size: 20px; font-weight: 900; color: var(--text-main); }
         .stat-value.accent { color: var(--primary); }
 
+        .period-row { display: flex; justify-content: space-between; align-items: center; }
         select {
-            background: #f3f1fb;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 8px 12px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-main);
-            outline: none;
-            font-family: 'Nunito', sans-serif;
+            background: #f3f1fb; border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 12px;
+            font-size: 13px; font-weight: 700; color: var(--text-main);
+            outline: none; font-family: 'Nunito', sans-serif;
         }
-
+        .nav-row { display: flex; align-items: center; gap: 10px; }
         .nav-btn {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            background: #f3f1fb;
-            border: none;
-            cursor: pointer;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #f3f1fb; border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            color: var(--text-sub);
-            font-size: 11px;
-            transition: background 0.15s;
+            color: var(--text-sub); font-size: 11px;
         }
-        .nav-btn:hover { background: #e8e4f8; }
         .nav-btn:disabled { opacity: 0.3; cursor: default; }
+        .date-range-text { font-size: 12px; font-weight: 800; color: var(--text-main); }
 
-        /* 모달 */
+        /* ── 모달 ── */
         #edit-modal {
             position: fixed; inset: 0;
-            background: rgba(50,45,90,0.35);
+            background: rgba(50,45,90,0.4);
             z-index: 50;
             display: flex; align-items: center; justify-content: center;
+            padding: 20px;
             opacity: 0; pointer-events: none;
             transition: opacity 0.25s;
-            padding: 20px;
         }
         #edit-modal.open { opacity: 1; pointer-events: all; }
+
         .modal-box {
-            background: white;
-            border-radius: 22px;
+            background: white; border-radius: 22px;
             padding: 24px;
-            width: 100%; max-width: 360px;
-            box-shadow: 0 8px 40px rgba(100,90,160,0.18);
-            transform: scale(0.95);
-            transition: transform 0.25s;
-            overflow: hidden;
-            box-sizing: border-box;
+            width: 100%; max-width: 320px;
+            box-shadow: 0 8px 40px rgba(100,90,160,0.2);
+            transform: scale(0.95); transition: transform 0.25s;
         }
         #edit-modal.open .modal-box { transform: scale(1); }
+
         .modal-title { font-size: 17px; font-weight: 900; color: var(--text-main); margin-bottom: 4px; }
         .modal-sub { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 20px; }
         .modal-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; display: block; }
+        .modal-field { margin-bottom: 14px; }
+
         .modal-input {
             width: 100%;
-            background: #f3f1fb;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 11px 14px;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-main);
-            outline: none;
-            box-sizing: border-box;
-            font-family: 'Nunito', sans-serif;
-            transition: border 0.2s;
+            background: #f3f1fb; border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px;
+            font-size: 15px; font-weight: 700; color: var(--text-main);
+            outline: none; font-family: 'Nunito', sans-serif;
+            text-align: center;
         }
         .modal-input:focus { border-color: var(--primary); }
-        input[type="date"].modal-input {
+
+        /* 아이폰 date input 완전 제어 */
+        input[type="date"] {
             -webkit-appearance: none;
             appearance: none;
+            width: 100%;
+        }
+        input[type="date"]::-webkit-date-and-time-value {
             text-align: center;
-            max-width: 100%;
-            padding: 11px 8px;
-            font-size: 13px;
         }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            opacity: 1;
-            filter: invert(50%) sepia(20%) saturate(500%) hue-rotate(220deg);
-        }
+
+        .time-row { display: flex; align-items: center; gap: 8px; }
+        .time-row .modal-input { flex: 1; }
+        .time-unit { font-size: 14px; font-weight: 700; color: var(--text-sub); flex-shrink: 0; }
+
+        input[type="number"] { -moz-appearance: textfield; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
         .btn-cancel {
             flex: 1; background: #f3f1fb; color: var(--text-sub);
             border: none; border-radius: 12px; padding: 12px;
             font-size: 14px; font-weight: 800; cursor: pointer;
             font-family: 'Nunito', sans-serif;
-            transition: background 0.15s;
         }
-        .btn-cancel:hover { background: #e8e4f8; }
         .btn-save {
             flex: 1; background: var(--primary-btn); color: white;
             border: none; border-radius: 12px; padding: 12px;
             font-size: 14px; font-weight: 800; cursor: pointer;
             font-family: 'Nunito', sans-serif;
-            transition: background 0.15s;
         }
-        .btn-save:hover { background: var(--primary); }
-
-        input[type="number"] { -moz-appearance: textfield; }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .btn-save:active { background: var(--primary); }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <p style="color:var(--text-sub);font-size:14px;font-weight:700;">데이터 불러오는 중...</p>
-    </div>
 
-    <nav>
-        <div style="max-width:480px;margin:0 auto;padding:0 18px;display:flex;justify-content:space-between;align-items:center;height:62px;">
-            <h1 style="font-size:20px;font-weight:900;color:var(--text-main);display:flex;align-items:center;gap:8px;">
-                <i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> 마이 트래커
-            </h1>
-            <div class="tab-group">
-                <button class="tab-btn active" id="tab-btn-tracker" onclick="switchTab('tracker')">트래커</button>
-                <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')">리포트</button>
-            </div>
+<div id="loading-screen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sub);font-size:14px;font-weight:700;">데이터 불러오는 중...</p>
+</div>
+
+<nav>
+    <div class="nav-inner">
+        <div class="nav-title">
+            <i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> 마이 트래커
         </div>
-    </nav>
+        <div class="tab-group">
+            <button class="tab-btn active" onclick="switchTab('tracker')">트래커</button>
+            <button class="tab-btn" onclick="switchTab('stats')">리포트</button>
+        </div>
+    </div>
+</nav>
 
-    <main style="max-width:480px;margin:0 auto;padding:20px 18px;">
+<div class="main-wrap">
 
-        <!-- 트래커 탭 -->
-        <div id="tab-tracker" style="display:flex;flex-direction:column;gap:16px;">
-            <div class="add-card">
-                <input type="text" id="task-input" class="add-input"
-                    placeholder="새로운 목표를 쓰세요 (예: 독서)"
-                    onkeypress="if(event.key==='Enter') addTask()">
-                <button class="add-btn" onclick="addTask()">추가</button>
+    <!-- 트래커 탭 -->
+    <div id="tab-tracker" class="tab-panel active">
+        <div class="stack">
+            <div class="card">
+                <div class="add-row">
+                    <input type="text" id="task-input" class="add-input"
+                        placeholder="새로운 목표를 쓰세요 (예: 독서)"
+                        onkeypress="if(event.key==='Enter') addTask()">
+                    <button class="add-btn" onclick="addTask()">추가</button>
+                </div>
             </div>
 
             <div class="total-card">
@@ -439,30 +319,32 @@
             </div>
 
             <div>
-                <p class="section-title" style="margin-bottom:12px;">오늘의 목표 목록</p>
-                <div id="task-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-                <div id="empty-state" class="empty-state hidden">
+                <p class="section-title">오늘의 목표 목록</p>
+                <div id="task-list"></div>
+                <div id="empty-state" class="empty-state">
                     <i class="fa-regular fa-clipboard"></i>
                     <p>등록된 목표가 없습니다.<br>위에서 새로운 목표를 추가해 보세요!</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- 리포트 탭 -->
-        <div id="tab-stats" style="display:none;flex-direction:column;gap:16px;">
-            <div class="report-card">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <!-- 리포트 탭 -->
+    <div id="tab-stats" class="tab-panel">
+        <div class="stack">
+            <div class="card">
+                <div class="period-row">
                     <select id="stats-period" onchange="changePeriod()">
                         <option value="weekly">주간 리포트</option>
                         <option value="monthly">월간 리포트</option>
                     </select>
-                    <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="nav-row">
                         <button class="nav-btn" onclick="navigateDate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="stats-date-range" style="font-size:12px;font-weight:800;color:var(--text-main);"></span>
+                        <span id="stats-date-range" class="date-range-text"></span>
                         <button class="nav-btn" id="next-date-btn" onclick="navigateDate(1)"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="stat-grid">
                     <div class="stat-box">
                         <p class="stat-label">해당 기간 총합</p>
                         <p id="stats-summary-total" class="stat-value">0분</p>
@@ -474,7 +356,7 @@
                 </div>
             </div>
 
-            <div class="report-card">
+            <div class="card">
                 <p style="font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:14px;display:flex;align-items:center;gap:6px;">
                     <i class="fa-solid fa-chart-bar" style="color:var(--primary);"></i> 집중 시간 그래프
                 </p>
@@ -483,415 +365,435 @@
                 </div>
             </div>
 
-            <div class="report-card">
+            <div class="card">
                 <p style="font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:14px;display:flex;align-items:center;gap:6px;">
                     <i class="fa-solid fa-list-pie" style="color:var(--primary);"></i> 목표별 상세 누적
                 </p>
-                <div id="stats-task-breakdown" style="display:flex;flex-direction:column;gap:14px;"></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 수정 모달 -->
-    <div id="edit-modal">
-        <div class="modal-box">
-            <p class="modal-title" id="modal-task-title">기록 수정</p>
-            <p class="modal-sub">직접 분 단위로 기록을 수정할 수 있습니다.</p>
-            <div style="display:flex;flex-direction:column;gap:14px;">
-                <div>
-                    <label class="modal-label">날짜 선택</label>
-                    <input type="date" id="modal-date-picker" class="modal-input" onchange="onModalDateChange()">
-                </div>
-                <div>
-                    <label class="modal-label">최종 집중 시간 (분)</label>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="예: 60"
-                            onfocus="this.select()"
-                            onkeypress="if(event.key==='Enter') saveModalChanges()">
-                        <span style="font-size:14px;font-weight:700;color:var(--text-sub);flex-shrink:0;">분</span>
-                    </div>
-                </div>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:22px;">
-                <button class="btn-cancel" onclick="closeModal()">취소</button>
-                <button class="btn-save" onclick="saveModalChanges()">저장하기</button>
+                <div id="stats-task-breakdown"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        // ── 파스텔 팔레트 (두 번째 이미지 기반 10색) ──
-        const pastelPalette = [
-            { id: 'pink',    hex: '#F9A8B8', dark: '#9a3050' },
-            { id: 'peach',   hex: '#FDD9B5', dark: '#9a5820' },
-            { id: 'mint',    hex: '#B8EAC8', dark: '#206840' },
-            { id: 'skyblue', hex: '#C8E4F8', dark: '#2a5a90' },
-            { id: 'lilac',   hex: '#E8B8F0', dark: '#6a2880' },
-            { id: 'lavender',hex: '#D4C8F0', dark: '#3a2880' },
-            { id: 'blue',    hex: '#A8D8F8', dark: '#1a5888' },
-            { id: 'beige',   hex: '#E8E0D0', dark: '#6a5a40' },
-            { id: 'blush',   hex: '#F8C8C8', dark: '#8a3030' },
-            { id: 'silver',  hex: '#D0D4D8', dark: '#485060' },
-        ];
+</div>
 
-        // 태스크별 색상 캐시 (세션 동안 일관성 유지)
-        const taskColorCache = {};
+<!-- 모달 -->
+<div id="edit-modal">
+    <div class="modal-box">
+        <p class="modal-title" id="modal-task-title">기록 수정</p>
+        <p class="modal-sub">직접 분 단위로 기록을 수정할 수 있습니다.</p>
 
-        function getTaskColor(task) {
-            if (task.colorId) {
-                const found = pastelPalette.find(p => p.id === task.colorId);
-                if (found) return found;
+        <div class="modal-field">
+            <label class="modal-label">날짜 선택</label>
+            <input type="date" id="modal-date-picker" class="modal-input" onchange="onModalDateChange()">
+        </div>
+
+        <div class="modal-field">
+            <label class="modal-label">최종 집중 시간 (분)</label>
+            <div class="time-row">
+                <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="0"
+                    onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') saveModalChanges()">
+                <span class="time-unit">분</span>
+            </div>
+        </div>
+
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal()">취소</button>
+            <button class="btn-save" onclick="saveModalChanges()">저장하기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── 파스텔 팔레트 ──
+    const pastelPalette = [
+        { id: 'pink',     hex: '#F9A8B8', dark: '#9a3050' },
+        { id: 'peach',    hex: '#FDD9B5', dark: '#9a5820' },
+        { id: 'mint',     hex: '#B8EAC8', dark: '#206840' },
+        { id: 'skyblue',  hex: '#C8E4F8', dark: '#2a5a90' },
+        { id: 'lilac',    hex: '#E8B8F0', dark: '#6a2880' },
+        { id: 'lavender', hex: '#D4C8F0', dark: '#3a2880' },
+        { id: 'blue',     hex: '#A8D8F8', dark: '#1a5888' },
+        { id: 'beige',    hex: '#E8E0D0', dark: '#6a5a40' },
+        { id: 'blush',    hex: '#F8C8C8', dark: '#8a3030' },
+        { id: 'silver',   hex: '#D0D4D8', dark: '#485060' },
+    ];
+
+    const taskColorCache = {};
+    function getTaskColor(task) {
+        if (task.colorId) {
+            const f = pastelPalette.find(p => p.id === task.colorId);
+            if (f) return f;
+        }
+        if (taskColorCache[task.id]) return taskColorCache[task.id];
+        let hash = 0;
+        const str = task.id || task.name || '';
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        const color = pastelPalette[Math.abs(hash) % pastelPalette.length];
+        taskColorCache[task.id] = color;
+        return color;
+    }
+
+    // ── 상태 ──
+    let tasks = [], timeLogs = {}, activeTaskId = null;
+    let timerInterval = null, localSeconds = 0, userId = null;
+    let myChart = null, currentNavDate = new Date(), modalActiveTaskId = null;
+
+    // ── 유틸 ──
+    function getTodayString() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function formatMinutes(m) {
+        if (!m || m === 0) return '0분';
+        const h = Math.floor(m / 60), min = m % 60;
+        return h > 0 ? `${h}시간 ${min}분` : `${min}분`;
+    }
+    function formatDisplayTime(s) {
+        if (!s || s < 1) return '0분 0초';
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+        return (h > 0 ? `${h}시간 ` : '') + `${m}분 ${sec}초`;
+    }
+
+    // ── 탭 전환 ──
+    function switchTab(id) {
+        // 패널 전환
+        document.getElementById('tab-tracker').classList.remove('active');
+        document.getElementById('tab-stats').classList.remove('active');
+        document.getElementById('tab-' + id).classList.add('active');
+
+        // 버튼 전환
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        var btns = document.querySelectorAll('.tab-btn');
+        if (id === 'tracker') btns[0].classList.add('active');
+        else btns[1].classList.add('active');
+
+        if (id === 'stats') renderStatistics();
+    }
+
+    // ── Firebase 실시간 동기화 ──
+    function setupRealtimeSync() {
+        if (!userId) return;
+        db.collection('users').doc(userId).collection('tasks').onSnapshot(function(snap) {
+            tasks = [];
+            snap.forEach(function(doc) { tasks.push(Object.assign({ id: doc.id }, doc.data())); });
+            tasks.sort(function(a, b) { return a.createdAt - b.createdAt; });
+            renderTaskList();
+            if (document.getElementById('tab-stats').classList.contains('active')) renderStatistics();
+        });
+        db.collection('users').doc(userId).collection('logs').onSnapshot(function(snap) {
+            timeLogs = {};
+            snap.forEach(function(doc) { timeLogs[doc.id] = doc.data(); });
+            updateTodayDashboard();
+            renderTaskList();
+            if (document.getElementById('tab-stats').classList.contains('active')) renderStatistics();
+            document.getElementById('loading-screen').style.display = 'none';
+        });
+    }
+
+    // ── 태스크 렌더 ──
+    function renderTaskList() {
+        var list = document.getElementById('task-list');
+        var empty = document.getElementById('empty-state');
+        list.innerHTML = '';
+
+        if (tasks.length === 0) {
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+
+        var todayLogs = timeLogs[getTodayString()] || {};
+        tasks.forEach(function(task) {
+            var color = getTaskColor(task);
+            var secs = todayLogs[task.id] || 0;
+            var totalSecs = typeof secs === 'number' ? secs : 0;
+            var isRunning = activeTaskId === task.id;
+            var realtimeSecs = isRunning ? totalSecs + localSeconds : totalSecs;
+
+            var timeText = formatDisplayTime(realtimeSecs);
+            var timeColor = isRunning ? color.dark : '#7a72a8';
+            var playBg = isRunning ? '#FDD9B5' : color.hex;
+            var playIcon = isRunning ? 'fa-pause' : 'fa-play';
+            var playIconColor = isRunning ? '#9a5820' : color.dark;
+
+            var card = document.createElement('div');
+            card.className = 'task-card' + (isRunning ? ' running' : '');
+            card.innerHTML =
+                '<div class="task-left">' +
+                    '<div class="task-bar" style="background:' + color.hex + ';"></div>' +
+                    '<div style="min-width:0;">' +
+                        '<p class="task-name">' + task.name + '</p>' +
+                        '<p class="task-time">오늘 누적: <span id="td-' + task.id + '" style="font-weight:800;color:' + timeColor + ';">' + timeText + '</span></p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="task-actions">' +
+                    '<button class="btn-icon btn-edit" onclick="openEditModal(\'' + task.id + '\',\'' + task.name.replace(/'/g, "\\'") + '\')">' +
+                        '<i class="fa-solid fa-pen" style="font-size:11px;"></i>' +
+                    '</button>' +
+                    '<button class="btn-icon btn-delete" onclick="deleteTask(\'' + task.id + '\',\'' + task.name.replace(/'/g, "\\'") + '\')">' +
+                        '<i class="fa-solid fa-trash" style="font-size:11px;"></i>' +
+                    '</button>' +
+                    '<button class="btn-play" style="background:' + playBg + ';" onclick="toggleTimer(\'' + task.id + '\')">' +
+                        '<i class="fa-solid ' + playIcon + '" style="color:' + playIconColor + ';font-size:11px;"></i>' +
+                    '</button>' +
+                '</div>';
+            list.appendChild(card);
+        });
+    }
+
+    // ── 태스크 추가 ──
+    function addTask() {
+        var input = document.getElementById('task-input');
+        var name = input.value.trim();
+        if (!name || !userId) return;
+        var colorId = pastelPalette[Math.floor(Math.random() * pastelPalette.length)].id;
+        db.collection('users').doc(userId).collection('tasks').add({
+            name: name, colorId: colorId,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        input.value = '';
+    }
+
+    // ── 태스크 삭제 ──
+    function deleteTask(id, name) {
+        if (!confirm("'" + name + "' 목표를 삭제하시겠습니까?\n(기존 리포트 기록은 유지됩니다.)")) return;
+        if (activeTaskId === id) toggleTimer(id);
+        db.collection('users').doc(userId).collection('tasks').doc(id).delete();
+    }
+
+    // ── 타이머 ──
+    function toggleTimer(taskId) {
+        var todayStr = getTodayString();
+        if (activeTaskId !== null) {
+            clearInterval(timerInterval);
+            if (localSeconds > 0) {
+                saveSecondsToCloud(todayStr, activeTaskId, localSeconds);
+                localSeconds = 0;
             }
-            // colorId 없는 기존 데이터 → id 기반 해시로 일관된 색상 배정
-            if (taskColorCache[task.id]) return taskColorCache[task.id];
-            let hash = 0;
-            const str = task.id || task.name || '';
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
+        }
+        if (activeTaskId === taskId) {
+            activeTaskId = null;
+            renderTaskList();
+            return;
+        }
+        activeTaskId = taskId;
+        localSeconds = 0;
+        renderTaskList();
+
+        timerInterval = setInterval(function() {
+            localSeconds++;
+            var task = tasks.find(function(t) { return t.id === taskId; });
+            if (!task) return;
+            var color = getTaskColor(task);
+            var existingSecs = (timeLogs[todayStr] || {})[taskId] || 0;
+            var rt = existingSecs + localSeconds;
+            var el = document.getElementById('td-' + taskId);
+            if (el) {
+                el.style.color = color.dark;
+                el.textContent = formatDisplayTime(rt) + ' ⏱️';
             }
-            const color = pastelPalette[Math.abs(hash) % pastelPalette.length];
-            taskColorCache[task.id] = color;
-            return color;
-        }
+            if (rt % 60 === 0) updateTodayDashboard();
+        }, 1000);
+    }
 
-        // ── 상태 ──
-        let tasks = [], timeLogs = {}, activeTaskId = null;
-        let timerInterval = null, localSeconds = 0, userId = null;
-        let myChart = null, currentNavDate = new Date(), modalActiveTaskId = null;
-
-        // ── 유틸 ──
-        function getTodayString() {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
-        function formatMinutes(m) {
-            if (!m || m === 0) return '0분';
-            const h = Math.floor(m / 60), min = m % 60;
-            return h > 0 ? `${h}시간 ${min}분` : `${min}분`;
-        }
-        function formatDisplayTime(s) {
-            if (!s || s < 1) return '0분 0초';
-            const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
-            return (h > 0 ? `${h}시간 ` : '') + `${m}분 ${sec}초`;
-        }
-
-        // ── 탭 전환 ──
-        function switchTab(id) {
-            document.getElementById('tab-tracker').style.display = 'none';
-            document.getElementById('tab-stats').style.display = 'none';
-            document.getElementById(`tab-${id}`).style.display = 'flex';
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-btn-${id}`).classList.add('active');
-            if (id === 'stats') renderStatistics();
-        }
-
-        // ── Firebase 실시간 동기화 ──
-        function setupRealtimeSync() {
-            if (!userId) return;
-            db.collection('users').doc(userId).collection('tasks').onSnapshot(snap => {
-                tasks = [];
-                snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
-                tasks.sort((a, b) => a.createdAt - b.createdAt);
-                renderTaskList();
-                if (document.getElementById('tab-stats').style.display !== 'none') renderStatistics();
-            });
-            db.collection('users').doc(userId).collection('logs').onSnapshot(snap => {
-                timeLogs = {};
-                snap.forEach(doc => { timeLogs[doc.id] = doc.data(); });
-                updateTodayDashboard();
-                renderTaskList();
-                if (document.getElementById('tab-stats').style.display !== 'none') renderStatistics();
-                document.getElementById('loading-screen').style.display = 'none';
-            });
-        }
-
-        // ── 태스크 렌더 ──
-        function renderTaskList() {
-            const list = document.getElementById('task-list');
-            const empty = document.getElementById('empty-state');
-            list.innerHTML = '';
-            if (tasks.length === 0) { empty.classList.remove('hidden'); return; }
-            empty.classList.add('hidden');
-
-            const todayLogs = timeLogs[getTodayString()] || {};
-            tasks.forEach(task => {
-                const color = getTaskColor(task);
-                const secs = todayLogs[task.id] || 0;
-                const totalSecs = typeof secs === 'number' ? secs : 0;
-                const isRunning = activeTaskId === task.id;
-
-                let timeHtml;
-                if (isRunning && localSeconds > 0) {
-                    const rt = totalSecs + localSeconds;
-                    timeHtml = `<span id="time-display-${task.id}" style="font-weight:800;color:${color.dark};">${formatDisplayTime(rt)} ⏱️</span>`;
-                } else {
-                    timeHtml = `<span id="time-display-${task.id}" style="font-weight:700;color:#7a72a8;">${formatDisplayTime(totalSecs)}</span>`;
-                }
-
-                const playBg = isRunning ? '#F0C4A0' : color.hex;
-                const playIcon = isRunning ? 'fa-pause' : 'fa-play';
-
-                const card = document.createElement('div');
-                card.className = `task-card${isRunning ? ' running' : ''}`;
-                card.innerHTML = `
-                    <div style="display:flex;align-items:center;flex:1;min-width:0;">
-                        <div class="task-color-bar" style="background:${color.hex};"></div>
-                        <div style="min-width:0;">
-                            <p class="task-name">${task.name}</p>
-                            <p class="task-time">오늘 누적: ${timeHtml}</p>
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:6px;margin-left:10px;">
-                        <button class="btn-icon btn-edit" onclick="openEditModal('${task.id}','${task.name.replace(/'/g,"\\'")}')">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn-icon btn-delete" onclick="deleteTask('${task.id}','${task.name.replace(/'/g,"\\'")}')">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                        <button class="btn-play" style="background:${playBg};" onclick="toggleTimer('${task.id}')">
-                            <i class="fa-solid ${playIcon}" style="color:${isRunning ? '#8a4820' : color.dark};font-size:11px;"></i>
-                        </button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
-
-        // ── 태스크 추가 ──
-        function addTask() {
-            const input = document.getElementById('task-input');
-            const name = input.value.trim();
-            if (!name || !userId) return;
-            const randomColorId = pastelPalette[Math.floor(Math.random() * pastelPalette.length)].id;
-            db.collection('users').doc(userId).collection('tasks').add({
-                name, colorId: randomColorId,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            input.value = '';
-        }
-
-        // ── 태스크 삭제 ──
-        function deleteTask(id, name) {
-            if (!confirm(`'${name}' 목표를 삭제하시겠습니까?\n(기존 리포트 기록은 유지됩니다.)`)) return;
-            if (activeTaskId === id) toggleTimer(id);
-            db.collection('users').doc(userId).collection('tasks').doc(id).delete();
-        }
-
-        // ── 타이머 토글 ──
-        function toggleTimer(taskId) {
-            const todayStr = getTodayString();
-            if (activeTaskId !== null) {
-                clearInterval(timerInterval);
-                if (localSeconds > 0) { saveSecondsToCloud(todayStr, activeTaskId, localSeconds); localSeconds = 0; }
-            }
-            if (activeTaskId === taskId) { activeTaskId = null; renderTaskList(); return; }
-
-            activeTaskId = taskId; localSeconds = 0; renderTaskList();
-            timerInterval = setInterval(() => {
-                localSeconds++;
-                const task = tasks.find(t => t.id === taskId);
-                if (!task) return;
-                const color = getTaskColor(task);
-                const existingSecs = (timeLogs[todayStr] || {})[taskId] || 0;
-                const rt = existingSecs + localSeconds;
-                const el = document.getElementById(`time-display-${taskId}`);
-                if (el) el.innerHTML = `<span style="font-weight:800;color:${color.dark};">${formatDisplayTime(rt)} ⏱️</span>`;
-                if (rt % 60 === 0) updateTodayDashboard();
-            }, 1000);
-        }
-
-        function saveSecondsToCloud(dateStr, taskId, addedSecs) {
-            if (!userId) return;
-            const ref = db.collection('users').doc(userId).collection('logs').doc(dateStr);
-            db.runTransaction(tx => tx.get(ref).then(doc => {
-                const data = doc.exists ? doc.data() : {};
+    function saveSecondsToCloud(dateStr, taskId, addedSecs) {
+        if (!userId) return;
+        var ref = db.collection('users').doc(userId).collection('logs').doc(dateStr);
+        db.runTransaction(function(tx) {
+            return tx.get(ref).then(function(doc) {
+                var data = doc.exists ? doc.data() : {};
                 data[taskId] = (typeof data[taskId] === 'number' ? data[taskId] : 0) + addedSecs;
                 tx.set(ref, data);
-            }));
-        }
+            });
+        });
+    }
 
-        function updateTodayDashboard() {
-            const logs = timeLogs[getTodayString()] || {};
-            let total = Object.values(logs).reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0);
-            if (activeTaskId) total += localSeconds;
-            document.getElementById('today-total-time').innerText = formatMinutes(Math.floor(total / 60));
-        }
+    function updateTodayDashboard() {
+        var logs = timeLogs[getTodayString()] || {};
+        var total = Object.values(logs).reduce(function(a, v) { return a + (typeof v === 'number' ? v : 0); }, 0);
+        if (activeTaskId) total += localSeconds;
+        document.getElementById('today-total-time').textContent = formatMinutes(Math.floor(total / 60));
+    }
 
-        // ── 모달 ──
-        function openEditModal(taskId, taskName) {
-            modalActiveTaskId = taskId;
-            document.getElementById('modal-task-title').innerText = `[${taskName}] 시간 수정`;
-            document.getElementById('modal-date-picker').value = getTodayString();
-            onModalDateChange();
-            document.getElementById('edit-modal').classList.add('open');
-        }
-        function closeModal() {
-            document.getElementById('edit-modal').classList.remove('open');
-            modalActiveTaskId = null;
-        }
-        function onModalDateChange() {
-            const date = document.getElementById('modal-date-picker').value;
-            if (!date) return;
-            const secs = (timeLogs[date] || {})[modalActiveTaskId] || 0;
-            document.getElementById('modal-time-input').value = Math.round(secs / 60);
-        }
-        function saveModalChanges() {
-            const date = document.getElementById('modal-date-picker').value;
-            const mins = parseInt(document.getElementById('modal-time-input').value, 10);
-            if (!date || isNaN(mins) || mins < 0 || !userId) return;
-            const ref = db.collection('users').doc(userId).collection('logs').doc(date);
-            db.runTransaction(tx => tx.get(ref).then(doc => {
-                const data = doc.exists ? doc.data() : {};
+    // ── 모달 ──
+    function openEditModal(taskId, taskName) {
+        modalActiveTaskId = taskId;
+        document.getElementById('modal-task-title').textContent = '[' + taskName + '] 시간 수정';
+        document.getElementById('modal-date-picker').value = getTodayString();
+        onModalDateChange();
+        document.getElementById('edit-modal').classList.add('open');
+    }
+    function closeModal() {
+        document.getElementById('edit-modal').classList.remove('open');
+        modalActiveTaskId = null;
+    }
+    function onModalDateChange() {
+        var date = document.getElementById('modal-date-picker').value;
+        if (!date) return;
+        var secs = (timeLogs[date] || {})[modalActiveTaskId] || 0;
+        document.getElementById('modal-time-input').value = Math.round(secs / 60);
+    }
+    function saveModalChanges() {
+        var date = document.getElementById('modal-date-picker').value;
+        var mins = parseInt(document.getElementById('modal-time-input').value, 10);
+        if (!date || isNaN(mins) || mins < 0 || !userId) return;
+        var ref = db.collection('users').doc(userId).collection('logs').doc(date);
+        db.runTransaction(function(tx) {
+            return tx.get(ref).then(function(doc) {
+                var data = doc.exists ? doc.data() : {};
                 if (mins === 0) delete data[modalActiveTaskId];
                 else data[modalActiveTaskId] = mins * 60;
                 tx.set(ref, data);
-            })).then(() => closeModal());
-        }
-
-        // ── 리포트 ──
-        function changePeriod() { currentNavDate = new Date(); renderStatistics(); }
-        function navigateDate(dir) {
-            const p = document.getElementById('stats-period').value;
-            if (p === 'weekly') currentNavDate.setDate(currentNavDate.getDate() + dir * 7);
-            else currentNavDate.setMonth(currentNavDate.getMonth() + dir);
-            renderStatistics();
-        }
-
-        function getPeriodDetails() {
-            const p = document.getElementById('stats-period').value;
-            let labels = [], dateStrings = [], displayRange = '';
-            if (p === 'weekly') {
-                let pivot = new Date(currentNavDate);
-                let dow = pivot.getDay();
-                let monday = new Date(pivot);
-                monday.setDate(pivot.getDate() + (dow === 0 ? -6 : 1 - dow));
-                for (let i = 0; i < 7; i++) {
-                    let d = new Date(monday); d.setDate(monday.getDate() + i);
-                    dateStrings.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
-                    labels.push(`${d.getDate()}일`);
-                }
-                const last = new Date(monday); last.setDate(monday.getDate() + 6);
-                displayRange = `${monday.getFullYear()}.${String(monday.getMonth()+1).padStart(2,'0')}.${String(monday.getDate()).padStart(2,'0')} ~ ${last.getFullYear()}.${String(last.getMonth()+1).padStart(2,'0')}.${String(last.getDate()).padStart(2,'0')}`;
-            } else {
-                const y = currentNavDate.getFullYear(), m = currentNavDate.getMonth();
-                const days = new Date(y, m + 1, 0).getDate();
-                for (let i = 1; i <= days; i++) {
-                    dateStrings.push(`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`);
-                    labels.push(`${i}일`);
-                }
-                displayRange = `${y}년 ${m + 1}월`;
-            }
-            return { labels, dateStrings, displayRange };
-        }
-
-        function renderStatistics() {
-            const { labels, dateStrings, displayRange } = getPeriodDetails();
-            document.getElementById('stats-date-range').innerText = displayRange;
-
-            const p = document.getElementById('stats-period').value;
-            let isFuture = false;
-            if (p === 'weekly') {
-                let end = new Date(currentNavDate);
-                end.setDate(end.getDate() + (end.getDay() === 0 ? 0 : 7 - end.getDay()));
-                if (end > new Date()) isFuture = true;
-            } else {
-                const check = new Date(currentNavDate.getFullYear(), currentNavDate.getMonth(), 1);
-                const now = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                if (check >= now) isFuture = true;
-            }
-            const nextBtn = document.getElementById('next-date-btn');
-            nextBtn.disabled = isFuture;
-            nextBtn.style.opacity = isFuture ? '0.3' : '1';
-
-            let dsMap = {}, totals = {}, overall = 0;
-            tasks.forEach(t => {
-                const c = getTaskColor(t);
-                dsMap[t.id] = { label: t.name, data: new Array(dateStrings.length).fill(0), backgroundColor: c.hex, borderRadius: 5 };
-                totals[t.id] = 0;
             });
-            dateStrings.forEach((ds, i) => {
-                const day = timeLogs[ds] || {};
-                Object.keys(day).forEach(tid => {
-                    if (dsMap[tid] && typeof day[tid] === 'number') {
-                        dsMap[tid].data[i] = Math.round(day[tid] / 60);
-                        totals[tid] += day[tid];
-                        overall += day[tid];
-                    }
-                });
-            });
+        }).then(function() { closeModal(); });
+    }
 
-            document.getElementById('stats-summary-total').innerText = formatMinutes(Math.round(overall / 60));
-            document.getElementById('stats-summary-avg').innerText = dateStrings.length > 0 ? `${Math.round((overall / 60) / dateStrings.length)}분` : '0분';
+    // ── 리포트 ──
+    function changePeriod() { currentNavDate = new Date(); renderStatistics(); }
+    function navigateDate(dir) {
+        var p = document.getElementById('stats-period').value;
+        if (p === 'weekly') currentNavDate.setDate(currentNavDate.getDate() + dir * 7);
+        else currentNavDate.setMonth(currentNavDate.getMonth() + dir);
+        renderStatistics();
+    }
 
-            const ctx = document.getElementById('statsChart').getContext('2d');
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: Object.values(dsMap) },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: tasks.length <= 5, position: 'top', labels: { boxWidth: 10, font: { size: 10, family: 'Nunito' }, color: '#8884a8' } } },
-                    scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, family: 'Nunito' }, color: '#8884a8' } },
-                        y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10, family: 'Nunito' }, color: '#8884a8' }, grid: { color: '#f0eef8' } }
-                    }
+    function getPeriodDetails() {
+        var p = document.getElementById('stats-period').value;
+        var labels = [], dateStrings = [], displayRange = '';
+        if (p === 'weekly') {
+            var pivot = new Date(currentNavDate);
+            var dow = pivot.getDay();
+            var monday = new Date(pivot);
+            monday.setDate(pivot.getDate() + (dow === 0 ? -6 : 1 - dow));
+            for (var i = 0; i < 7; i++) {
+                var d = new Date(monday); d.setDate(monday.getDate() + i);
+                dateStrings.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'));
+                labels.push(d.getDate() + '일');
+            }
+            var last = new Date(monday); last.setDate(monday.getDate() + 6);
+            displayRange = monday.getFullYear() + '.' + String(monday.getMonth()+1).padStart(2,'0') + '.' + String(monday.getDate()).padStart(2,'0') +
+                ' ~ ' + last.getFullYear() + '.' + String(last.getMonth()+1).padStart(2,'0') + '.' + String(last.getDate()).padStart(2,'0');
+        } else {
+            var y = currentNavDate.getFullYear(), m = currentNavDate.getMonth();
+            var days = new Date(y, m + 1, 0).getDate();
+            for (var j = 1; j <= days; j++) {
+                dateStrings.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(j).padStart(2,'0'));
+                labels.push(j + '일');
+            }
+            displayRange = y + '년 ' + (m + 1) + '월';
+        }
+        return { labels: labels, dateStrings: dateStrings, displayRange: displayRange };
+    }
+
+    function renderStatistics() {
+        var det = getPeriodDetails();
+        document.getElementById('stats-date-range').textContent = det.displayRange;
+
+        var p = document.getElementById('stats-period').value;
+        var isFuture = false;
+        if (p === 'weekly') {
+            var end = new Date(currentNavDate);
+            end.setDate(end.getDate() + (end.getDay() === 0 ? 0 : 7 - end.getDay()));
+            if (end > new Date()) isFuture = true;
+        } else {
+            var check = new Date(currentNavDate.getFullYear(), currentNavDate.getMonth(), 1);
+            var now = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            if (check >= now) isFuture = true;
+        }
+        var nextBtn = document.getElementById('next-date-btn');
+        nextBtn.disabled = isFuture;
+        nextBtn.style.opacity = isFuture ? '0.3' : '1';
+
+        var dsMap = {}, totals = {}, overall = 0;
+        tasks.forEach(function(t) {
+            var c = getTaskColor(t);
+            dsMap[t.id] = { label: t.name, data: new Array(det.dateStrings.length).fill(0), backgroundColor: c.hex, borderRadius: 5 };
+            totals[t.id] = 0;
+        });
+        det.dateStrings.forEach(function(ds, i) {
+            var day = timeLogs[ds] || {};
+            Object.keys(day).forEach(function(tid) {
+                if (dsMap[tid] && typeof day[tid] === 'number') {
+                    dsMap[tid].data[i] = Math.round(day[tid] / 60);
+                    totals[tid] += day[tid];
+                    overall += day[tid];
                 }
             });
+        });
 
-            const breakdown = document.getElementById('stats-task-breakdown');
-            breakdown.innerHTML = '';
-            if (overall === 0) {
-                breakdown.innerHTML = '<p style="text-align:center;color:var(--text-sub);font-size:13px;font-weight:600;padding:16px 0;">해당 기간 내 기록된 데이터가 없습니다.</p>';
-                return;
+        document.getElementById('stats-summary-total').textContent = formatMinutes(Math.round(overall / 60));
+        document.getElementById('stats-summary-avg').textContent = det.dateStrings.length > 0 ? Math.round((overall / 60) / det.dateStrings.length) + '분' : '0분';
+
+        var ctx = document.getElementById('statsChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: det.labels, datasets: Object.values(dsMap) },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: tasks.length <= 5, position: 'top', labels: { boxWidth: 10, font: { size: 10, family: 'Nunito' }, color: '#8884a8' } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }, color: '#8884a8' } },
+                    y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 }, color: '#8884a8' }, grid: { color: '#f0eef8' } }
+                }
             }
-            tasks.forEach(t => {
-                const secs = totals[t.id] || 0;
-                if (!secs) return;
-                const pct = Math.round((secs / overall) * 100);
-                const c = getTaskColor(t);
-                const row = document.createElement('div');
-                row.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
-                row.innerHTML = `
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div style="display:flex;align-items:center;gap:7px;">
-                            <div style="width:8px;height:8px;border-radius:50%;background:${c.hex};"></div>
-                            <span style="font-size:13px;font-weight:700;color:var(--text-main);">${t.name}</span>
-                        </div>
-                        <span style="font-size:12px;font-weight:700;color:var(--text-sub);">
-                            <b style="color:var(--text-main);">${formatMinutes(Math.round(secs/60))}</b> (${pct}%)
-                        </span>
-                    </div>
-                    <div style="width:100%;background:#f0eef8;border-radius:6px;height:8px;overflow:hidden;">
-                        <div style="width:${pct}%;background:${c.hex};height:100%;border-radius:6px;"></div>
-                    </div>
-                `;
-                breakdown.appendChild(row);
-            });
+        });
+
+        var breakdown = document.getElementById('stats-task-breakdown');
+        breakdown.innerHTML = '';
+        if (overall === 0) {
+            breakdown.innerHTML = '<p style="text-align:center;color:var(--text-sub);font-size:13px;font-weight:600;padding:16px 0;">해당 기간 내 기록된 데이터가 없습니다.</p>';
+            return;
         }
+        tasks.forEach(function(t) {
+            var secs = totals[t.id] || 0;
+            if (!secs) return;
+            var pct = Math.round((secs / overall) * 100);
+            var c = getTaskColor(t);
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-bottom:14px;';
+            row.innerHTML =
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div style="display:flex;align-items:center;gap:7px;">' +
+                        '<div style="width:8px;height:8px;border-radius:50%;background:' + c.hex + ';flex-shrink:0;"></div>' +
+                        '<span style="font-size:13px;font-weight:700;color:var(--text-main);">' + t.name + '</span>' +
+                    '</div>' +
+                    '<span style="font-size:12px;font-weight:700;color:var(--text-sub);">' +
+                        '<b style="color:var(--text-main);">' + formatMinutes(Math.round(secs/60)) + '</b> (' + pct + '%)' +
+                    '</span>' +
+                '</div>' +
+                '<div style="width:100%;background:#f0eef8;border-radius:6px;height:8px;overflow:hidden;">' +
+                    '<div style="width:' + pct + '%;background:' + c.hex + ';height:100%;border-radius:6px;"></div>' +
+                '</div>';
+            breakdown.appendChild(row);
+        });
+    }
 
-        // ── Firebase 설정 ──
-        const firebaseConfig = {
-            apiKey: "AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
-            authDomain: "mytimetracker-eae2d.firebaseapp.com",
-            projectId: "mytimetracker-eae2d",
-            storageBucket: "mytimetracker-eae2d.firebasestorage.app",
-            messagingSenderId: "517418710325",
-            appId: "1:517418710325:web:d19bbdd1eb9363a038c87c"
-        };
+    // ── Firebase ──
+    var firebaseConfig = {
+        apiKey: "AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
+        authDomain: "mytimetracker-eae2d.firebaseapp.com",
+        projectId: "mytimetracker-eae2d",
+        storageBucket: "mytimetracker-eae2d.firebasestorage.app",
+        messagingSenderId: "517418710325",
+        appId: "1:517418710325:web:d19bbdd1eb9363a038c87c"
+    };
 
-        // PWA Service Worker 등록
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/MyTimeTracker/sw.js');
-            });
-        }
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/MyTimeTracker/sw.js');
+        });
+    }
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        firebase.auth().signInAnonymously()
-            .then(cred => { userId = cred.user.uid; setupRealtimeSync(); })
-            .catch(err => { console.error(err); alert('Firebase 연결 실패'); });
-    </script>
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+    firebase.auth().signInAnonymously()
+        .then(function(cred) { userId = cred.user.uid; setupRealtimeSync(); })
+        .catch(function(err) { console.error(err); alert('Firebase 연결 실패'); });
+</script>
 </body>
 </html>
