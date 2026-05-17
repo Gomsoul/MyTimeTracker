@@ -170,13 +170,13 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
 <div id="edit-modal">
     <div class="modal-box">
         <p class="modal-title" id="modal-title">시간 추가</p>
-        <p class="modal-sub">직접 분 단위로 기록을 수정할 수 있습니다.</p>
+        <p class="modal-sub">스탑워치로 재지 않은 시간을 추가합니다.</p>
         <div class="modal-field">
             <label class="modal-label">날짜 선택</label>
             <input type="date" id="modal-date" class="m-input" onchange="onDateChange()">
         </div>
         <div class="modal-field">
-            <label class="modal-label">최종 집중 시간 (분)</label>
+            <label class="modal-label">추가할 시간 (분)</label>
             <div class="time-row">
                 <input type="number" id="modal-mins" class="m-input" min="0" placeholder="0" onfocus="this.select()" onkeydown="if(event.key==='Enter')saveModal()">
                 <span class="time-unit">분</span>
@@ -320,14 +320,17 @@ function openModal(id,name){
 }
 function closeModal(){document.getElementById('edit-modal').classList.remove('open');modalId=null;}
 function onDateChange(){
-    var dt=document.getElementById('modal-date').value;if(!dt)return;
-    document.getElementById('modal-mins').value=Math.round(((logs[dt]||{})[modalId]||0)/60);
+    document.getElementById('modal-mins').value='';
 }
 function saveModal(){
     var dt=document.getElementById('modal-date').value,m=parseInt(document.getElementById('modal-mins').value,10);
-    if(!dt||isNaN(m)||m<0||!uid)return;
+    if(!dt||isNaN(m)||m<=0||!uid)return;
     var ref=db.collection('users').doc(uid).collection('logs').doc(dt);
-    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){var d=doc.exists?doc.data():{};if(m===0)delete d[modalId];else d[modalId]=m*60;tx.set(ref,d);});}).then(function(){closeModal();});
+    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){
+        var d=doc.exists?doc.data():{};
+        d[modalId]=(typeof d[modalId]==='number'?d[modalId]:0)+(m*60);
+        tx.set(ref,d);
+    });}).then(function(){closeModal();});
 }
 
 /* 리포트 */
