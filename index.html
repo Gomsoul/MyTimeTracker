@@ -11,6 +11,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="마이 트래커">
+    <meta name="theme-color" content="#9B8FD4">
     <style>
         * { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
 
@@ -513,14 +518,25 @@
             { id: 'mauve',   hex: '#C494C4', dark: '#5a2860' },
         ];
 
+        // 태스크별 색상 캐시 (세션 동안 일관성 유지)
+        const taskColorCache = {};
+
         function getTaskColor(task) {
             if (task.colorId) {
                 const found = pastelPalette.find(p => p.id === task.colorId);
                 if (found) return found;
             }
+            // colorId 없는 기존 데이터 → id 기반 해시로 일관된 색상 배정
+            if (taskColorCache[task.id]) return taskColorCache[task.id];
             let hash = 0;
-            if (task.id) for (let i = 0; i < task.id.length; i++) hash += task.id.charCodeAt(i);
-            return pastelPalette[hash % pastelPalette.length];
+            const str = task.id || task.name || '';
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            const color = pastelPalette[Math.abs(hash) % pastelPalette.length];
+            taskColorCache[task.id] = color;
+            return color;
         }
 
         // ── 상태 ──
@@ -846,6 +862,13 @@
             messagingSenderId: "517418710325",
             appId: "1:517418710325:web:d19bbdd1eb9363a038c87c"
         };
+
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/MyTimeTracker/sw.js');
+            });
+        }
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
