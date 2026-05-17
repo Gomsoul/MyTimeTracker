@@ -363,7 +363,11 @@
             transition: border 0.2s;
         }
         .modal-input:focus { border-color: var(--primary); }
-        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 1;
+            filter: invert(50%) sepia(20%) saturate(500%) hue-rotate(220deg);
+        }
         .btn-cancel {
             flex: 1; background: #f3f1fb; color: var(--text-sub);
             border: none; border-radius: 12px; padding: 12px;
@@ -491,7 +495,9 @@
                 <div>
                     <label class="modal-label">최종 집중 시간 (분)</label>
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="예: 60">
+                        <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="예: 60"
+                            onfocus="this.select()"
+                            onkeypress="if(event.key==='Enter') saveModalChanges()">
                         <span style="font-size:14px;font-weight:700;color:var(--text-sub);flex-shrink:0;">분</span>
                     </div>
                 </div>
