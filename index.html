@@ -1,413 +1,835 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>마이 트래커</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="마이 트래커">
-<meta name="theme-color" content="#9B8FD4">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: #eef0f8; min-height: 100vh; padding-bottom: 80px; }
-:root { --primary:#9B8FD4; --primary-btn:#B8AEE0; --text-main:#3a3560; --text-sub:#8884a8; --border:#e4e2f0; --surface:#fff; --shadow:0 2px 12px rgba(100,90,160,0.07); }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>마이 트래커</title>
 
-#loading-screen { position:fixed; inset:0; background:#fff; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.spinner { width:44px; height:44px; border:3px solid #e8e4f8; border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:14px; }
-@keyframes spin { to { transform:rotate(360deg); } }
+  <!-- PWA -->
+  <link rel="manifest" href="/MyTimeTracker/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="마이 트래커" />
+  <meta name="theme-color" content="#ffffff" />
 
-nav { background:#fff; box-shadow:0 1px 0 var(--border); position:sticky; top:0; z-index:40; }
-.nav-inner { max-width:480px; margin:0 auto; padding:0 18px; display:flex; justify-content:space-between; align-items:center; height:62px; }
-.nav-title { font-size:20px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px; }
-.tab-group { display:flex; background:#ede9f8; border-radius:14px; padding:4px; gap:2px; }
-.tab-btn { padding:7px 20px; border-radius:10px; font-size:14px; font-weight:700; border:none; cursor:pointer; color:var(--text-sub); background:transparent; font-family:'Nunito',sans-serif; }
-.tab-btn.on { background:#fff; color:var(--text-main); box-shadow:0 1px 6px rgba(100,90,160,0.13); }
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-.wrap { max-width:480px; margin:0 auto; padding:20px 18px; }
-.stack > * + * { margin-top:16px; }
-.card { background:var(--surface); border-radius:18px; border:1px solid var(--border); box-shadow:var(--shadow); padding:16px; }
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-.add-row { display:flex; gap:10px; }
-.add-input { flex:1; min-width:0; background:#f3f1fb; border:1px solid #e0ddf5; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:600; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; }
-.add-input::placeholder { color:#b0aac8; }
-.add-input:focus { border-color:var(--primary); }
-.add-btn { flex-shrink:0; background:var(--primary-btn); color:#fff; border:none; border-radius:12px; padding:11px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; font-family:'Nunito',sans-serif; }
+  <!-- Firebase 8.10.1 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-.total-card { background:linear-gradient(135deg,#b8b0e4,#a0b8e8); border-radius:22px; padding:24px 22px 20px; position:relative; overflow:hidden; }
-.total-card::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(255,255,255,0.12); border-radius:50%; }
-.total-label { font-size:11px; font-weight:800; letter-spacing:0.12em; color:rgba(255,255,255,0.75); margin-bottom:4px; }
-.total-time { font-size:42px; font-weight:900; color:#fff; line-height:1.1; }
-.total-note { font-size:12px; color:rgba(255,255,255,0.7); margin-top:10px; display:flex; align-items:center; gap:6px; }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.sec-title { font-size:15px; font-weight:800; color:var(--text-main); margin-bottom:12px; }
+    :root {
+      --bg: #eef0f8;
+      --white: #ffffff;
+      --nav-shadow: 0 2px 12px rgba(100,100,180,0.08);
+      --card-shadow: 0 4px 20px rgba(100,100,180,0.10);
+      --card-radius: 16px;
+      --tab-bg: #ede9f8;
+      --accent: #7c6fcf;
+      --text-main: #2d2d4e;
+      --text-sub: #8888aa;
+      --gradient-start: #6c8ef5;
+      --gradient-end: #9b7fe8;
 
-.task-card { background:var(--surface); border-radius:18px; padding:14px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:10px; }
-.task-card:last-child { margin-bottom:0; }
-.task-left { display:flex; align-items:center; flex:1; min-width:0; }
-.task-bar { width:5px; height:30px; border-radius:3px; margin-right:12px; flex-shrink:0; }
-.task-name { font-size:15px; font-weight:800; color:var(--text-main); }
-.task-time-label { font-size:12px; color:var(--text-sub); margin-top:2px; font-weight:600; }
-.task-actions { display:flex; align-items:center; gap:6px; margin-left:8px; flex-shrink:0; }
-.btn-i { width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.btn-edit { background:#f3f1fb; color:#a09ac0; }
-.btn-del { background:#fdf0f0; color:#e09090; }
-.btn-play { width:42px; height:34px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      --pink:    #F9A8B8;
+      --peach:   #FDD9B5;
+      --mint:    #B8EAC8;
+      --skyblue: #C8E4F8;
+      --lilac:   #E8B8F0;
+      --lavender:#D4C8F0;
+      --blue:    #A8D8F8;
+      --beige:   #E8E0D0;
+      --blush:   #F8C8C8;
+      --silver:  #D0D4D8;
+    }
 
-.empty { text-align:center; padding:48px 0; color:var(--text-sub); }
-.empty i { font-size:36px; margin-bottom:12px; display:block; }
-.empty p { font-size:13px; font-weight:600; line-height:1.7; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
 
-.period-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-.nav-row { display:flex; align-items:center; gap:8px; }
-.date-range { font-size:11px; font-weight:800; color:var(--text-main); }
-select { background:#f3f1fb; border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; }
-.nav-btn { width:30px; height:30px; border-radius:50%; background:#f3f1fb; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-sub); font-size:10px; }
-.nav-btn:disabled { opacity:0.3; cursor:default; }
-.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.stat-box { background:#f3f1fb; border-radius:12px; padding:12px; text-align:center; }
-.stat-label { font-size:11px; color:var(--text-sub); font-weight:600; margin-bottom:3px; }
-.stat-val { font-size:20px; font-weight:900; color:var(--text-main); }
-.stat-val.blue { color:var(--primary); }
-.chart-wrap { position:relative; width:100%; height:220px; margin-top:14px; }
-.report-title { font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--white);
+      box-shadow: var(--nav-shadow);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px;
+      height: 60px;
+    }
+    .nav-title {
+      font-size: 1.15rem; font-weight: 800; color: var(--text-main);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tab-group {
+      display: flex; align-items: center;
+      background: var(--tab-bg);
+      border-radius: 12px; padding: 4px; gap: 2px;
+    }
+    .tab-btn {
+      border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem; font-weight: 700;
+      padding: 6px 18px; border-radius: 9px;
+      background: transparent; color: var(--accent);
+      transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+    }
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(100,100,180,0.13);
+    }
 
-#edit-modal { position:fixed; inset:0; background:rgba(50,45,90,0.4); z-index:50; display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity 0.2s; }
-#edit-modal.open { opacity:1; pointer-events:all; }
-.modal-box { background:#fff; border-radius:22px; padding:24px; width:100%; max-width:300px; box-shadow:0 8px 40px rgba(100,90,160,0.2); transform:scale(0.95); transition:transform 0.2s; }
-#edit-modal.open .modal-box { transform:scale(1); }
-.modal-title { font-size:17px; font-weight:900; color:var(--text-main); margin-bottom:4px; }
-.modal-sub { font-size:12px; color:var(--text-sub); font-weight:600; margin-bottom:20px; }
-.modal-label { font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:6px; display:block; }
-.modal-field { margin-bottom:14px; }
-.m-input { display:block; width:100%; background:#f3f1fb; border:1px solid var(--border); border-radius:12px; padding:12px; font-size:15px; font-weight:700; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; text-align:center; -webkit-appearance:none; appearance:none; }
-.m-input:focus { border-color:var(--primary); }
-input[type=number] { -moz-appearance:textfield; }
-input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
-.time-row { display:flex; align-items:center; gap:8px; }
-.time-unit { font-size:14px; font-weight:700; color:var(--text-sub); flex-shrink:0; }
-.modal-btns { display:flex; gap:10px; margin-top:22px; }
-.btn-cancel { flex:1; background:#f3f1fb; color:var(--text-sub); border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; font-family:'Nunito',sans-serif; }
-.btn-save { flex:1; background:var(--primary-btn); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; font-family:'Nunito',sans-serif; }
-</style>
+    /* ── MAIN CONTENT ── */
+    main { max-width: 600px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ── TODAY TOTAL CARD ── */
+    .total-card {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border-radius: var(--card-radius);
+      padding: 24px 28px;
+      color: var(--white);
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(108,142,245,0.28);
+    }
+    .total-card .label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+      opacity: 0.85; margin-bottom: 6px; text-transform: uppercase;
+    }
+    .total-card .time-big {
+      font-size: 2.4rem; font-weight: 900; letter-spacing: -0.02em;
+    }
+    .total-card .sub { font-size: 0.82rem; opacity: 0.75; margin-top: 4px; }
+
+    /* ── ADD GOAL ── */
+    .add-row {
+      display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .add-input {
+      flex: 1; border: 2px solid #d8d8ee; border-radius: 12px;
+      padding: 10px 16px; font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem; font-weight: 600; color: var(--text-main);
+      background: var(--white); outline: none;
+      transition: border-color 0.18s;
+    }
+    .add-input:focus { border-color: var(--accent); }
+    .add-input::placeholder { color: var(--text-sub); font-weight: 500; }
+    .add-btn {
+      border: none; cursor: pointer; border-radius: 12px;
+      background: var(--accent); color: var(--white);
+      font-family: 'Nunito', sans-serif; font-weight: 800;
+      font-size: 1.2rem; padding: 0 18px;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+    .add-btn:active { transform: scale(0.95); opacity: 0.9; }
+
+    /* ── GOAL CARDS ── */
+    .goal-list { display: flex; flex-direction: column; gap: 10px; }
+    .goal-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      display: flex; align-items: center;
+      overflow: hidden;
+      transition: transform 0.15s;
+    }
+    .goal-card:active { transform: scale(0.99); }
+    .goal-color-bar {
+      width: 5px; align-self: stretch; flex-shrink: 0;
+    }
+    .goal-body {
+      flex: 1; padding: 14px 12px;
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+    }
+    .goal-info { flex: 1; min-width: 0; }
+    .goal-name {
+      font-size: 0.95rem; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .goal-time {
+      font-size: 0.82rem; font-weight: 600; color: var(--text-sub);
+      margin-top: 2px; font-variant-numeric: tabular-nums;
+    }
+    .goal-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .icon-btn {
+      border: none; cursor: pointer; background: none;
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; transition: background 0.15s;
+      color: var(--text-sub);
+    }
+    .icon-btn:hover { background: var(--bg); }
+    .play-btn {
+      width: 38px; height: 38px; border-radius: 12px;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800;
+      transition: transform 0.12s, filter 0.15s;
+      flex-shrink: 0;
+    }
+    .play-btn:active { transform: scale(0.92); }
+    .play-btn.running { filter: brightness(0.88); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 48px 16px;
+      color: var(--text-sub); font-size: 0.9rem; font-weight: 600;
+    }
+    .empty-state .emoji { font-size: 2.4rem; margin-bottom: 12px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(45,45,78,0.35); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white); border-radius: 20px;
+      padding: 28px 24px; width: 100%; max-width: 380px;
+      box-shadow: 0 20px 60px rgba(100,100,180,0.22);
+      animation: modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.88) translateY(12px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal-title {
+      font-size: 1.05rem; font-weight: 800; color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .modal-desc {
+      font-size: 0.8rem; color: var(--text-sub); font-weight: 500;
+      margin-bottom: 20px; line-height: 1.5;
+    }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--text-sub); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .modal-input {
+      width: 100%; border: 2px solid #d8d8ee; border-radius: 12px;
+      padding: 10px 14px; font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem; font-weight: 600; color: var(--text-main);
+      background: var(--white); outline: none;
+      transition: border-color 0.18s;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-input[type="date"] {
+      max-width: 100%; cursor: pointer;
+      -webkit-appearance: none;
+    }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .btn-cancel {
+      flex: 1; border: 2px solid #d8d8ee; background: none;
+      border-radius: 12px; padding: 10px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
+      font-size: 0.9rem; color: var(--text-sub); cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-cancel:hover { border-color: #b8b8cc; }
+    .btn-save {
+      flex: 2; border: none; background: var(--accent);
+      border-radius: 12px; padding: 10px;
+      font-family: 'Nunito', sans-serif; font-weight: 800;
+      font-size: 0.9rem; color: var(--white); cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* ── EDIT MODAL ── */
+    #editModal .modal-title { margin-bottom: 16px; }
+
+    /* ── REPORT TAB ── */
+    .report-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; gap: 8px; flex-wrap: wrap;
+    }
+    .period-group {
+      display: flex; background: var(--tab-bg); border-radius: 10px; padding: 3px; gap: 2px;
+    }
+    .period-btn {
+      border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem; font-weight: 700; padding: 5px 14px;
+      border-radius: 8px; background: transparent; color: var(--accent);
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .period-btn.active {
+      background: var(--white); color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(100,100,180,0.12);
+    }
+    .nav-arrows { display: flex; align-items: center; gap: 6px; }
+    .arrow-btn {
+      border: none; background: var(--white); cursor: pointer;
+      border-radius: 9px; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: var(--text-sub);
+      box-shadow: 0 2px 8px rgba(100,100,180,0.10);
+      transition: background 0.15s;
+    }
+    .arrow-btn:hover { background: var(--bg); }
+    .period-label {
+      font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+      white-space: nowrap;
+    }
+    .stat-row {
+      display: flex; gap: 10px; margin-bottom: 20px;
+    }
+    .stat-card {
+      flex: 1; background: var(--white); border-radius: var(--card-radius);
+      padding: 16px 18px; box-shadow: var(--card-shadow);
+    }
+    .stat-card .s-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--text-sub);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+    }
+    .stat-card .s-value {
+      font-size: 1.35rem; font-weight: 900; color: var(--text-main);
+    }
+    .chart-card {
+      background: var(--white); border-radius: var(--card-radius);
+      padding: 20px; box-shadow: var(--card-shadow); margin-bottom: 16px;
+    }
+    .chart-card canvas { max-height: 220px; }
+    .breakdown-list { display: flex; flex-direction: column; gap: 10px; }
+    .breakdown-item {
+      background: var(--white); border-radius: var(--card-radius);
+      padding: 14px 16px; box-shadow: var(--card-shadow);
+    }
+    .breakdown-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .breakdown-name { font-size: 0.9rem; font-weight: 700; }
+    .breakdown-time { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); }
+    .progress-track {
+      height: 8px; border-radius: 99px; background: var(--bg); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.34,1.2,0.64,1);
+    }
+
+    /* ── LOADING ── */
+    .loading-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: var(--bg); display: flex;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+    }
+    .loading-spinner {
+      width: 40px; height: 40px; border: 4px solid #e0dcf8;
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.9rem; font-weight: 600; color: var(--text-sub); }
+
+    @media (max-width: 380px) {
+      nav { padding: 0 12px; }
+      .tab-btn { padding: 6px 12px; font-size: 0.8rem; }
+      main { padding: 16px 10px 60px; }
+      .total-card .time-big { font-size: 2rem; }
+    }
+  </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div class="spinner"></div>
-    <p style="color:var(--text-sub);font-size:14px;font-weight:700">데이터 불러오는 중...</p>
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">불러오는 중...</div>
 </div>
 
+<!-- Nav -->
 <nav>
-    <div class="nav-inner">
-        <div class="nav-title"><i class="fa-solid fa-stopwatch" style="color:var(--primary)"></i> 마이 트래커</div>
-        <div class="tab-group">
-            <button class="tab-btn" id="btn-tracker" onclick="showTab('tracker')">트래커</button>
-            <button class="tab-btn" id="btn-stats" onclick="showTab('stats')">리포트</button>
-        </div>
-    </div>
+  <div class="nav-title">⏱ 마이 트래커</div>
+  <div class="tab-group">
+    <button class="tab-btn" id="tabTrackerBtn" onclick="showTab('tracker')">트래커</button>
+    <button class="tab-btn" id="tabReportBtn" onclick="showTab('report')">리포트</button>
+  </div>
 </nav>
 
-<div class="wrap">
-    <div id="tab-tracker" class="stack" style="display:none">
-        <div class="card">
-            <div class="add-row">
-                <input type="text" id="task-input" class="add-input" placeholder="새로운 목표를 쓰세요 (예: 독서)" onkeydown="if(event.key==='Enter')addTask()">
-                <button class="add-btn" onclick="addTask()">추가</button>
-            </div>
-        </div>
-        <div class="total-card">
-            <p class="total-label">TODAY TOTAL</p>
-            <div id="today-total" class="total-time">0분</div>
-            <p class="total-note"><i class="fa-solid fa-cloud" style="font-size:12px"></i> 초 단위까지 안전하게 저장됩니다.</p>
-        </div>
-        <div>
-            <p class="sec-title">오늘의 목표 목록</p>
-            <div id="task-list"></div>
-            <div id="empty" class="empty" style="display:none">
-                <i class="fa-regular fa-clipboard"></i>
-                <p>등록된 목표가 없습니다.<br>위에서 새로운 목표를 추가해 보세요!</p>
-            </div>
-        </div>
+<main>
+  <!-- TRACKER TAB -->
+  <div id="trackerPanel" style="display:none">
+    <!-- Today Total -->
+    <div class="total-card">
+      <div class="label">TODAY TOTAL</div>
+      <div class="time-big" id="todayTotal">0분 00초</div>
+      <div class="sub" id="todayDate">오늘</div>
     </div>
 
-    <div id="tab-stats" class="stack" style="display:none">
-        <div class="card">
-            <div class="period-row">
-                <select id="stats-period" onchange="changePeriod()">
-                    <option value="weekly">주간 리포트</option>
-                    <option value="monthly">월간 리포트</option>
-                </select>
-                <div class="nav-row">
-                    <button class="nav-btn" id="prev-btn"><i class="fa-solid fa-chevron-left"></i></button>
-                    <span id="date-range" class="date-range"></span>
-                    <button class="nav-btn" id="next-btn"><i class="fa-solid fa-chevron-right"></i></button>
-                </div>
-            </div>
-            <div class="stat-grid">
-                <div class="stat-box"><p class="stat-label">해당 기간 총합</p><p id="stat-total" class="stat-val">0분</p></div>
-                <div class="stat-box"><p class="stat-label">하루 평균 집중</p><p id="stat-avg" class="stat-val blue">0분</p></div>
-            </div>
-        </div>
-        <div class="card">
-            <p class="report-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary)"></i> 집중 시간 그래프</p>
-            <div class="chart-wrap"><canvas id="myChart"></canvas></div>
-        </div>
-        <div class="card">
-            <p class="report-title"><i class="fa-solid fa-list-pie" style="color:var(--primary)"></i> 목표별 상세 누적</p>
-            <div id="breakdown"></div>
-        </div>
+    <!-- Add Goal -->
+    <div class="add-row">
+      <input class="add-input" id="goalInput" placeholder="새 목표 입력..." maxlength="40" />
+      <button class="add-btn" onclick="addGoal()">＋</button>
     </div>
+
+    <!-- Goal List -->
+    <div class="goal-list" id="goalList">
+      <div class="empty-state">
+        <div class="emoji">🎯</div>
+        <div>목표를 추가해보세요!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT TAB -->
+  <div id="reportPanel" style="display:none">
+    <div class="report-header">
+      <div class="period-group">
+        <button class="period-btn active" id="weekBtn" onclick="setPeriod('week')">주간</button>
+        <button class="period-btn" id="monthBtn" onclick="setPeriod('month')">월간</button>
+      </div>
+      <div class="nav-arrows">
+        <button class="arrow-btn" onclick="movePeriod(-1)">‹</button>
+        <span class="period-label" id="periodLabel"></span>
+        <button class="arrow-btn" onclick="movePeriod(1)">›</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="s-label">총합</div>
+        <div class="s-value" id="reportTotal">0분</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">하루 평균</div>
+        <div class="s-value" id="reportAvg">0분</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <canvas id="reportChart"></canvas>
+    </div>
+    <div class="breakdown-list" id="breakdownList"></div>
+  </div>
+</main>
+
+<!-- Time Add Modal -->
+<div class="modal-overlay" id="timeModal">
+  <div class="modal">
+    <div class="modal-title" id="timeModalTitle">시간 추가</div>
+    <div class="modal-desc">스탑워치로 재지 않은 시간을 추가합니다.</div>
+    <div class="modal-field">
+      <label>날짜</label>
+      <input class="modal-input" type="date" id="timeModalDate" />
+    </div>
+    <div class="modal-field">
+      <label>추가할 시간 (분)</label>
+      <input class="modal-input" type="number" id="timeModalMins" placeholder="분 입력" min="1" max="1440" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTimeModal()">취소</button>
+      <button class="btn-save" onclick="saveTimeModal()">저장</button>
+    </div>
+  </div>
 </div>
 
-<div id="edit-modal">
-    <div class="modal-box">
-        <p class="modal-title" id="modal-title">시간 추가</p>
-        <p class="modal-sub">스탑워치로 재지 않은 시간을 추가합니다.</p>
-        <div class="modal-field">
-            <label class="modal-label">날짜 선택</label>
-            <input type="date" id="modal-date" class="m-input" onchange="onDateChange()">
-        </div>
-        <div class="modal-field">
-            <label class="modal-label">추가할 시간 (분)</label>
-            <div class="time-row">
-                <input type="number" id="modal-mins" class="m-input" min="0" placeholder="0" onfocus="this.select()" onkeydown="if(event.key==='Enter')saveModal()">
-                <span class="time-unit">분</span>
-            </div>
-        </div>
-        <div class="modal-btns">
-            <button class="btn-cancel" onclick="closeModal()">취소</button>
-            <button class="btn-save" onclick="saveModal()">저장하기</button>
-        </div>
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">목표 수정</div>
+    <div class="modal-field">
+      <label>목표 이름</label>
+      <input class="modal-input" id="editInput" maxlength="40" />
     </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">취소</button>
+      <button class="btn-save" onclick="saveEditModal()">저장</button>
+    </div>
+  </div>
 </div>
 
 <script>
-var PALETTE=[
-    {id:'pink',hex:'#F9A8B8',dark:'#9a3050'},{id:'peach',hex:'#FDD9B5',dark:'#9a5820'},
-    {id:'mint',hex:'#B8EAC8',dark:'#206840'},{id:'skyblue',hex:'#C8E4F8',dark:'#2a5a90'},
-    {id:'lilac',hex:'#E8B8F0',dark:'#6a2880'},{id:'lavender',hex:'#D4C8F0',dark:'#3a2880'},
-    {id:'blue',hex:'#A8D8F8',dark:'#1a5888'},{id:'beige',hex:'#E8E0D0',dark:'#6a5a40'},
-    {id:'blush',hex:'#F8C8C8',dark:'#8a3030'},{id:'silver',hex:'#D0D4D8',dark:'#485060'}
-];
-var CC={};
-function getColor(t){
-    if(t.colorId){var f=PALETTE.find(function(p){return p.id===t.colorId;});if(f)return f;}
-    if(CC[t.id])return CC[t.id];
-    var h=0,s=t.id||t.name||'';
-    for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
-    CC[t.id]=PALETTE[Math.abs(h)%PALETTE.length];return CC[t.id];
-}
-
-var tasks=[],logs={},activeId=null,tmr=null,localSec=0,uid=null,myChart=null,curDate=new Date(),modalId=null;
-
-function pad(n){return String(n).padStart(2,'0');}
-function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
-function fmtMin(m){if(!m)return '0분';var h=Math.floor(m/60),n=m%60;return h>0?h+'시간 '+n+'분':n+'분';}
-function fmtSec(s){if(!s||s<1)return '0분 0초';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),n=Math.floor(s%60);return (h>0?h+'시간 ':'')+m+'분 '+n+'초';}
-
-/* 탭 전환 */
-function showTab(id){
-    document.getElementById('tab-tracker').style.display='none';
-    document.getElementById('tab-stats').style.display='none';
-    document.getElementById('btn-tracker').classList.remove('on');
-    document.getElementById('btn-stats').classList.remove('on');
-    document.getElementById('tab-'+id).style.display='block';
-    document.getElementById('btn-'+id).classList.add('on');
-    if(id==='stats')renderStats();
-}
-
-/* Firebase 동기화 */
-function startSync(){
-    if(!uid)return;
-    db.collection('users').doc(uid).collection('tasks').onSnapshot(function(s){
-        tasks=[];s.forEach(function(d){tasks.push(Object.assign({id:d.id},d.data()));});
-        tasks.sort(function(a,b){return a.createdAt-b.createdAt;});
-        renderList();
-        if(document.getElementById('tab-stats').style.display==='block')renderStats();
-    });
-    db.collection('users').doc(uid).collection('logs').onSnapshot(function(s){
-        logs={};s.forEach(function(d){logs[d.id]=d.data();});
-        updateTotal();renderList();
-        if(document.getElementById('tab-stats').style.display==='block')renderStats();
-        document.getElementById('loading-screen').style.display='none';
-    });
-}
-
-/* 목록 렌더 */
-function renderList(){
-    var list=document.getElementById('task-list');
-    var empty=document.getElementById('empty');
-    list.innerHTML='';
-    if(tasks.length===0){empty.style.display='block';return;}
-    empty.style.display='none';
-    var tl=logs[todayStr()]||{};
-    tasks.forEach(function(task){
-        var c=getColor(task);
-        var s=typeof tl[task.id]==='number'?tl[task.id]:0;
-        var isRun=activeId===task.id;
-        var rt=isRun?s+localSec:s;
-        var div=document.createElement('div');
-        div.className='task-card';
-        div.innerHTML=
-            '<div class="task-left">'+
-                '<div class="task-bar" style="background:'+c.hex+'"></div>'+
-                '<div style="min-width:0">'+
-                    '<p class="task-name">'+task.name+'</p>'+
-                    '<p class="task-time-label">오늘 누적: <span id="td-'+task.id+'" style="font-weight:800;color:'+(isRun?c.dark:'#7a72a8')+'">'+fmtSec(rt)+(isRun?' ⏱️':'')+'</span></p>'+
-                '</div>'+
-            '</div>'+
-            '<div class="task-actions">'+
-                '<button class="btn-i btn-edit" onclick="openModal(\''+task.id+'\',\''+task.name.replace(/'/g,"\\'")+'\')"><i class="fa-solid fa-pen" style="font-size:11px"></i></button>'+
-                '<button class="btn-i btn-del" onclick="delTask(\''+task.id+'\',\''+task.name.replace(/'/g,"\\'")+'\')"><i class="fa-solid fa-trash" style="font-size:11px"></i></button>'+
-                '<button class="btn-play" style="background:'+(isRun?'#FDD9B5':c.hex)+'" onclick="toggleTimer(\''+task.id+'\')"><i class="fa-solid '+(isRun?'fa-pause':'fa-play')+'" style="color:'+(isRun?'#9a5820':c.dark)+';font-size:11px"></i></button>'+
-            '</div>';
-        list.appendChild(div);
-    });
-}
-
-function addTask(){
-    var inp=document.getElementById('task-input'),name=inp.value.trim();
-    if(!name||!uid)return;
-    db.collection('users').doc(uid).collection('tasks').add({name:name,colorId:PALETTE[Math.floor(Math.random()*PALETTE.length)].id,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    inp.value='';
-}
-function delTask(id,name){
-    if(!confirm("'"+name+"' 목표를 삭제할까요?"))return;
-    if(activeId===id)toggleTimer(id);
-    db.collection('users').doc(uid).collection('tasks').doc(id).delete();
-}
-function toggleTimer(id){
-    var td=todayStr();
-    if(activeId!==null){clearInterval(tmr);if(localSec>0){saveSec(td,activeId,localSec);localSec=0;}}
-    if(activeId===id){activeId=null;renderList();return;}
-    activeId=id;localSec=0;renderList();
-    tmr=setInterval(function(){
-        localSec++;
-        var task=tasks.find(function(t){return t.id===id;});if(!task)return;
-        var c=getColor(task),es=(logs[td]||{})[id]||0,rt=es+localSec;
-        var el=document.getElementById('td-'+id);
-        if(el){el.style.color=c.dark;el.textContent=fmtSec(rt)+' ⏱️';}
-        if(rt%60===0)updateTotal();
-    },1000);
-}
-function saveSec(ds,tid,sec){
-    if(!uid)return;
-    var ref=db.collection('users').doc(uid).collection('logs').doc(ds);
-    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){var d=doc.exists?doc.data():{};d[tid]=(typeof d[tid]==='number'?d[tid]:0)+sec;tx.set(ref,d);});});
-}
-function updateTotal(){
-    var tl=logs[todayStr()]||{},tot=0;
-    Object.values(tl).forEach(function(v){if(typeof v==='number')tot+=v;});
-    if(activeId)tot+=localSec;
-    document.getElementById('today-total').textContent=fmtMin(Math.floor(tot/60));
-}
-
-/* 모달 */
-function openModal(id,name){
-    modalId=id;
-    document.getElementById('modal-title').textContent='['+name+'] 시간 추가';
-    document.getElementById('modal-date').value=todayStr();
-    onDateChange();
-    document.getElementById('edit-modal').classList.add('open');
-}
-function closeModal(){document.getElementById('edit-modal').classList.remove('open');modalId=null;}
-function onDateChange(){
-    document.getElementById('modal-mins').value='';
-}
-function saveModal(){
-    var dt=document.getElementById('modal-date').value,m=parseInt(document.getElementById('modal-mins').value,10);
-    if(!dt||isNaN(m)||m<=0||!uid)return;
-    var ref=db.collection('users').doc(uid).collection('logs').doc(dt);
-    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){
-        var d=doc.exists?doc.data():{};
-        d[modalId]=(typeof d[modalId]==='number'?d[modalId]:0)+(m*60);
-        tx.set(ref,d);
-    });}).then(function(){closeModal();});
-}
-
-/* 리포트 */
-function changePeriod(){curDate=new Date();renderStats();}
-function moveDate(dir){
-    var p=document.getElementById('stats-period').value;
-    if(p==='weekly')curDate.setDate(curDate.getDate()+dir*7);
-    else curDate.setMonth(curDate.getMonth()+dir);
-    renderStats();
-}
-function getPeriod(){
-    var p=document.getElementById('stats-period').value,labels=[],dates=[],range='';
-    if(p==='weekly'){
-        var pv=new Date(curDate),dw=pv.getDay(),mon=new Date(pv);
-        mon.setDate(pv.getDate()+(dw===0?-6:1-dw));
-        for(var i=0;i<7;i++){var d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));labels.push(d.getDate()+'일');}
-        var last=new Date(mon);last.setDate(mon.getDate()+6);
-        range=mon.getFullYear()+'.'+pad(mon.getMonth()+1)+'.'+pad(mon.getDate())+' ~ '+last.getFullYear()+'.'+pad(last.getMonth()+1)+'.'+pad(last.getDate());
-    } else {
-        var y=curDate.getFullYear(),mo=curDate.getMonth(),days=new Date(y,mo+1,0).getDate();
-        for(var j=1;j<=days;j++){dates.push(y+'-'+pad(mo+1)+'-'+pad(j));labels.push(j+'일');}
-        range=y+'년 '+(mo+1)+'월';
-    }
-    return {labels:labels,dates:dates,range:range};
-}
-function renderStats(){
-    var pd=getPeriod();
-    document.getElementById('date-range').textContent=pd.range;
-    var p=document.getElementById('stats-period').value,fut=false;
-    if(p==='weekly'){var e=new Date(curDate);e.setDate(e.getDate()+(e.getDay()===0?0:7-e.getDay()));if(e>new Date())fut=true;}
-    else{if(new Date(curDate.getFullYear(),curDate.getMonth(),1)>=new Date(new Date().getFullYear(),new Date().getMonth(),1))fut=true;}
-    document.getElementById('next-btn').disabled=fut;
-    document.getElementById('next-btn').style.opacity=fut?'0.3':'1';
-
-    var dsMap={},tots={},total=0;
-    tasks.forEach(function(t){var c=getColor(t);dsMap[t.id]={label:t.name,data:new Array(pd.dates.length).fill(0),backgroundColor:c.hex,borderRadius:5};tots[t.id]=0;});
-    pd.dates.forEach(function(ds,i){var day=logs[ds]||{};Object.keys(day).forEach(function(tid){if(dsMap[tid]&&typeof day[tid]==='number'){dsMap[tid].data[i]=Math.round(day[tid]/60);tots[tid]+=day[tid];total+=day[tid];}});});
-
-    document.getElementById('stat-total').textContent=fmtMin(Math.round(total/60));
-    document.getElementById('stat-avg').textContent=pd.dates.length>0?Math.round((total/60)/pd.dates.length)+'분':'0분';
-
-    var ctx=document.getElementById('myChart').getContext('2d');
-    if(myChart)myChart.destroy();
-    myChart=new Chart(ctx,{type:'bar',data:{labels:pd.labels,datasets:Object.values(dsMap)},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:tasks.length<=5,position:'top',labels:{boxWidth:10,font:{size:10,family:'Nunito'},color:'#8884a8'}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},color:'#8884a8'}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:10},color:'#8884a8'},grid:{color:'#f0eef8'}}}}});
-
-    var bd=document.getElementById('breakdown');bd.innerHTML='';
-    if(total===0){bd.innerHTML='<p style="text-align:center;color:var(--text-sub);font-size:13px;font-weight:600;padding:16px 0">해당 기간 내 기록된 데이터가 없습니다.</p>';return;}
-    tasks.forEach(function(t){
-        var s=tots[t.id]||0;if(!s)return;
-        var pct=Math.round((s/total)*100),c=getColor(t),row=document.createElement('div');
-        row.style.marginBottom='14px';
-        row.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+c.hex+';flex-shrink:0"></div><span style="font-size:13px;font-weight:700;color:var(--text-main)">'+t.name+'</span></div><span style="font-size:12px;font-weight:700;color:var(--text-sub)"><b style="color:var(--text-main)">'+fmtMin(Math.round(s/60))+'</b> ('+pct+'%)</span></div><div style="width:100%;background:#f0eef8;border-radius:6px;height:8px;overflow:hidden"><div style="width:'+pct+'%;background:'+c.hex+';height:100%;border-radius:6px"></div></div>';
-        bd.appendChild(row);
-    });
-}
-
-/* 버튼 이벤트 */
-document.getElementById('prev-btn').addEventListener('click',function(){moveDate(-1);});
-document.getElementById('next-btn').addEventListener('click',function(){moveDate(1);});
-
-/* Firebase */
-var firebaseConfig={
-    apiKey:"AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
-    authDomain:"mytimetracker-eae2d.firebaseapp.com",
-    projectId:"mytimetracker-eae2d",
-    storageBucket:"mytimetracker-eae2d.firebasestorage.app",
-    messagingSenderId:"517418710325",
-    appId:"1:517418710325:web:d19bbdd1eb9363a038c87c"
+// ── FIREBASE INIT ──
+const firebaseConfig = {
+  apiKey: "AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
+  authDomain: "mytimetracker-eae2d.firebaseapp.com",
+  projectId: "mytimetracker-eae2d",
+  storageBucket: "mytimetracker-eae2d.firebasestorage.app",
+  messagingSenderId: "517418710325",
+  appId: "1:517418710325:web:d19bbdd1eb9363a038c87c"
 };
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/MyTimeTracker/sw.js');});}
 firebase.initializeApp(firebaseConfig);
-var db=firebase.firestore();
-firebase.auth().signInAnonymously()
-    .then(function(c){uid=c.user.uid;startSync();})
-    .catch(function(e){console.error(e);alert('Firebase 연결 실패');});
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* 첫 화면: 트래커만 표시 */
+// ── COLORS ──
+const COLORS = {
+  pink:    '#F9A8B8', peach:   '#FDD9B5', mint:    '#B8EAC8',
+  skyblue: '#C8E4F8', lilac:   '#E8B8F0', lavender:'#D4C8F0',
+  blue:    '#A8D8F8', beige:   '#E8E0D0', blush:   '#F8C8C8', silver:  '#D0D4D8'
+};
+const COLOR_KEYS = Object.keys(COLORS);
+function randomColorId() { return COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)]; }
+function colorFromId(id) {
+  if (!id) return '#D4C8F0';
+  let h = 0; for (let c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return COLORS[COLOR_KEYS[h % COLOR_KEYS.length]];
+}
+function getColor(task) {
+  return task.colorId ? (COLORS[task.colorId] || colorFromId(task.id)) : colorFromId(task.id);
+}
+
+// ── STATE ──
+let uid = null;
+let tasks = [];       // [{id, name, colorId, createdAt}]
+let todayLogs = {};   // {taskId: seconds}
+let allLogs = {};     // {'YYYY-MM-DD': {taskId: seconds}}
+let runningId = null;
+let runningStart = null;
+let timerInterval = null;
+let taskUnsub = null;
+let logUnsubMap = {};
+
+let timeModalTaskId = null;
+let editModalTaskId = null;
+
+let reportPeriod = 'week';
+let reportOffset = 0;
+let reportChart = null;
+
+// ── DATE HELPERS ──
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function secsToHM(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  if (h > 0) return `${h}시간 ${m}분`;
+  return `${m}분`;
+}
+function secsToMS(s) {
+  return `${Math.floor(s/60)}분 ${String(s%60).padStart(2,'0')}초`;
+}
+function dateKo(d) {
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${['일','월','화','수','목','금','토'][d.getDay()]})`;
+}
+
+// ── TAB ──
+function showTab(tab) {
+  document.getElementById('trackerPanel').style.display = (tab === 'tracker') ? 'block' : 'none';
+  document.getElementById('reportPanel').style.display  = (tab === 'report')  ? 'block' : 'none';
+  document.getElementById('tabTrackerBtn').classList.toggle('active', tab === 'tracker');
+  document.getElementById('tabReportBtn').classList.toggle('active',  tab === 'report');
+  if (tab === 'report') renderReport();
+}
+
+// ── AUTH & LOAD ──
+auth.signInAnonymously().catch(console.error);
+auth.onAuthStateChanged(user => {
+  if (!user) return;
+  uid = user.uid;
+  loadTasks();
+  document.getElementById('todayDate').textContent = dateKo(new Date());
+});
+
+function tasksRef()       { return db.collection('users').doc(uid).collection('tasks'); }
+function logsRef(dateStr) { return db.collection('users').doc(uid).collection('logs').doc(dateStr); }
+
+function loadTasks() {
+  if (taskUnsub) taskUnsub();
+  taskUnsub = tasksRef().orderBy('createdAt').onSnapshot(snap => {
+    tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    subscribeLog(todayStr());
+    renderGoals();
+    document.getElementById('loadingOverlay').style.display = 'none';
+  });
+}
+
+function subscribeLog(dateStr) {
+  if (logUnsubMap[dateStr]) return;
+  logUnsubMap[dateStr] = logsRef(dateStr).onSnapshot(snap => {
+    const data = snap.exists ? snap.data() : {};
+    if (dateStr === todayStr()) {
+      todayLogs = data;
+      renderGoals();
+    }
+    allLogs[dateStr] = data;
+  });
+}
+
+// ── GOAL CRUD ──
+async function addGoal() {
+  const inp = document.getElementById('goalInput');
+  const name = inp.value.trim();
+  if (!name || !uid) return;
+  inp.value = '';
+  const colorId = randomColorId();
+  await tasksRef().add({ name, colorId, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+
+document.getElementById('goalInput').addEventListener('keydown', e => { if (e.key === 'Enter') addGoal(); });
+
+async function deleteGoal(id) {
+  if (!confirm('정말 삭제할까요?')) return;
+  if (runningId === id) stopTimer();
+  await tasksRef().doc(id).delete();
+}
+
+// ── EDIT MODAL ──
+function openEditModal(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  editModalTaskId = id;
+  document.getElementById('editInput').value = t.name;
+  document.getElementById('editModal').classList.add('open');
+  setTimeout(() => document.getElementById('editInput').focus(), 80);
+}
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editModalTaskId = null;
+}
+async function saveEditModal() {
+  const name = document.getElementById('editInput').value.trim();
+  if (!name || !editModalTaskId) return;
+  await tasksRef().doc(editModalTaskId).update({ name });
+  closeEditModal();
+}
+document.getElementById('editInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveEditModal(); });
+document.getElementById('editModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeEditModal(); });
+
+// ── TIME ADD MODAL ──
+function openTimeModal(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  timeModalTaskId = id;
+  document.getElementById('timeModalTitle').textContent = `[${t.name}] 시간 추가`;
+  document.getElementById('timeModalDate').value = todayStr();
+  document.getElementById('timeModalMins').value = '';
+  document.getElementById('timeModal').classList.add('open');
+  setTimeout(() => document.getElementById('timeModalMins').focus(), 80);
+}
+function closeTimeModal() {
+  document.getElementById('timeModal').classList.remove('open');
+  timeModalTaskId = null;
+}
+document.getElementById('timeModalMins').addEventListener('click', function() { this.select(); });
+document.getElementById('timeModalMins').addEventListener('keydown', e => { if (e.key === 'Enter') saveTimeModal(); });
+document.getElementById('timeModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTimeModal(); });
+
+async function saveTimeModal() {
+  const mins = parseInt(document.getElementById('timeModalMins').value);
+  const dateStr = document.getElementById('timeModalDate').value;
+  if (!mins || mins < 1 || !dateStr || !timeModalTaskId) return;
+  const addSecs = mins * 60;
+  const ref = logsRef(dateStr);
+  const snap = await ref.get();
+  const existing = snap.exists ? (snap.data()[timeModalTaskId] || 0) : 0;
+  await ref.set({ [timeModalTaskId]: existing + addSecs }, { merge: true });
+  allLogs[dateStr] = { ...(allLogs[dateStr] || {}), [timeModalTaskId]: existing + addSecs };
+  if (dateStr === todayStr()) todayLogs = allLogs[dateStr];
+  closeTimeModal();
+  renderGoals();
+}
+
+// ── TIMER ──
+function toggleTimer(id) {
+  if (runningId === id) { stopTimer(); return; }
+  if (runningId) stopTimer();
+  runningId = id;
+  runningStart = Date.now();
+  timerInterval = setInterval(() => { renderGoals(); updateTodayTotal(); }, 1000);
+  renderGoals();
+}
+async function stopTimer() {
+  if (!runningId) return;
+  const elapsed = Math.round((Date.now() - runningStart) / 1000);
+  const id = runningId;
+  runningId = null; runningStart = null;
+  clearInterval(timerInterval); timerInterval = null;
+  if (elapsed > 0) {
+    const ref = logsRef(todayStr());
+    const snap = await ref.get();
+    const existing = snap.exists ? (snap.data()[id] || 0) : 0;
+    await ref.set({ [id]: existing + elapsed }, { merge: true });
+  }
+  renderGoals();
+}
+
+function getTodaySecs(id) {
+  let s = todayLogs[id] || 0;
+  if (runningId === id) s += Math.round((Date.now() - runningStart) / 1000);
+  return s;
+}
+function getTodayTotal() {
+  let total = Object.values(todayLogs).reduce((a,b) => a+b, 0);
+  if (runningId) total += Math.round((Date.now() - runningStart) / 1000);
+  return total;
+}
+function updateTodayTotal() {
+  const s = getTodayTotal();
+  document.getElementById('todayTotal').textContent = secsToMS(s);
+}
+
+// ── RENDER GOALS ──
+function renderGoals() {
+  updateTodayTotal();
+  const list = document.getElementById('goalList');
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🎯</div><div>목표를 추가해보세요!</div></div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => {
+    const color = getColor(t);
+    const secs  = getTodaySecs(t.id);
+    const isRun = runningId === t.id;
+    return `
+      <div class="goal-card">
+        <div class="goal-color-bar" style="background:${color}"></div>
+        <div class="goal-body">
+          <div class="goal-info">
+            <div class="goal-name">${escHtml(t.name)}</div>
+            <div class="goal-time">${secsToMS(secs)}</div>
+          </div>
+          <div class="goal-actions">
+            <button class="icon-btn" title="시간 추가" onclick="openTimeModal('${t.id}')">＋</button>
+            <button class="icon-btn" title="수정" onclick="openEditModal('${t.id}')">✏️</button>
+            <button class="icon-btn" title="삭제" onclick="deleteGoal('${t.id}')">🗑️</button>
+            <button class="play-btn ${isRun ? 'running' : ''}"
+              style="background:${color}; color:#fff;"
+              onclick="toggleTimer('${t.id}')"
+              title="${isRun ? '정지' : '재생'}">
+              ${isRun ? '⏸' : '▶'}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── REPORT ──
+function setPeriod(p) {
+  reportPeriod = p; reportOffset = 0;
+  document.getElementById('weekBtn').classList.toggle('active', p === 'week');
+  document.getElementById('monthBtn').classList.toggle('active', p === 'month');
+  renderReport();
+}
+function movePeriod(dir) { reportOffset += dir; renderReport(); }
+
+function getPeriodDates() {
+  const now = new Date();
+  if (reportPeriod === 'week') {
+    const day = now.getDay();
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1 + reportOffset * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      dates.push(fmtDate(d));
+    }
+    return { dates, label: `${mon.getMonth()+1}/${mon.getDate()} – ${sun.getMonth()+1}/${sun.getDate()}`, days: 7 };
+  } else {
+    const base = new Date(now.getFullYear(), now.getMonth() + reportOffset, 1);
+    const daysInMonth = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+    const dates = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth(), i);
+      dates.push(fmtDate(d));
+    }
+    return { dates, label: `${base.getFullYear()}년 ${base.getMonth()+1}월`, days: daysInMonth };
+  }
+}
+
+async function renderReport() {
+  const { dates, label, days } = getPeriodDates();
+  document.getElementById('periodLabel').textContent = label;
+
+  // Ensure logs are subscribed
+  dates.forEach(d => { if (!logUnsubMap[d]) subscribeLog(d); });
+
+  // Gather data
+  const taskTotals = {}; // taskId -> seconds
+  let grandTotal = 0;
+  const dateLabels = reportPeriod === 'week'
+    ? dates.map(d => { const dd = new Date(d); return ['일','월','화','수','목','금','토'][dd.getDay()]; })
+    : dates.map(d => new Date(d).getDate() + '일');
+
+  const perDateTask = {}; // taskId -> [secPerDay]
+  tasks.forEach(t => { taskTotals[t.id] = 0; perDateTask[t.id] = new Array(dates.length).fill(0); });
+
+  dates.forEach((d, i) => {
+    const log = allLogs[d] || {};
+    Object.entries(log).forEach(([tid, s]) => {
+      if (taskTotals[tid] !== undefined) { taskTotals[tid] += s; perDateTask[tid][i] += s; }
+      grandTotal += s;
+    });
+  });
+
+  document.getElementById('reportTotal').textContent = secsToHM(grandTotal);
+  document.getElementById('reportAvg').textContent   = secsToHM(Math.round(grandTotal / days));
+
+  // Chart
+  const ctx = document.getElementById('reportChart').getContext('2d');
+  const datasets = tasks.map(t => ({
+    label: t.name,
+    data: perDateTask[t.id].map(s => Math.round(s/60)),
+    backgroundColor: getColor(t) + 'cc',
+    borderRadius: 6, borderSkipped: false,
+  }));
+
+  if (reportChart) reportChart.destroy();
+  reportChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: dateLabels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'Nunito', size: 11 } } },
+        y: { stacked: true, beginAtZero: true, ticks: { font: { family: 'Nunito', size: 11 } } }
+      }
+    }
+  });
+
+  // Breakdown
+  const sorted = tasks.slice().sort((a,b) => (taskTotals[b.id]||0) - (taskTotals[a.id]||0));
+  const maxSec = sorted[0] ? (taskTotals[sorted[0].id] || 1) : 1;
+  document.getElementById('breakdownList').innerHTML = sorted.map(t => {
+    const s = taskTotals[t.id] || 0;
+    const pct = Math.round(s / (grandTotal || 1) * 100);
+    const barW = Math.round(s / maxSec * 100);
+    const color = getColor(t);
+    return `
+      <div class="breakdown-item">
+        <div class="breakdown-top">
+          <span class="breakdown-name" style="color:${color}">${escHtml(t.name)}</span>
+          <span class="breakdown-time">${secsToHM(s)} (${pct}%)</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${barW}%;background:${color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/MyTimeTracker/sw.js').catch(() => {});
+  });
+}
+
+// ── INIT ──
 showTab('tracker');
 </script>
 </body>
