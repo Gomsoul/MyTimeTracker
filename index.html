@@ -1,800 +1,411 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>마이 트래커</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="마이 트래커">
-    <meta name="theme-color" content="#9B8FD4">
-    <style>
-        * { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마이 트래커</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="마이 트래커">
+<meta name="theme-color" content="#9B8FD4">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: #eef0f8; min-height: 100vh; padding-bottom: 80px; }
+:root { --primary:#9B8FD4; --primary-btn:#B8AEE0; --text-main:#3a3560; --text-sub:#8884a8; --border:#e4e2f0; --surface:#fff; --shadow:0 2px 12px rgba(100,90,160,0.07); }
 
-        body { background: #eef0f8; min-height: 100vh; padding-bottom: 80px; margin: 0; }
+#loading-screen { position:fixed; inset:0; background:#fff; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.spinner { width:44px; height:44px; border:3px solid #e8e4f8; border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:14px; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
-        :root {
-            --primary: #9B8FD4;
-            --primary-light: #C4BCE8;
-            --primary-btn: #B8AEE0;
-            --text-main: #3a3560;
-            --text-sub: #8884a8;
-            --border: #e4e2f0;
-            --surface: #ffffff;
-            --card-shadow: 0 2px 12px rgba(100,90,160,0.07);
-        }
+nav { background:#fff; box-shadow:0 1px 0 var(--border); position:sticky; top:0; z-index:40; }
+.nav-inner { max-width:480px; margin:0 auto; padding:0 18px; display:flex; justify-content:space-between; align-items:center; height:62px; }
+.nav-title { font-size:20px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px; }
+.tab-group { display:flex; background:#ede9f8; border-radius:14px; padding:4px; gap:2px; }
+.tab-btn { padding:7px 20px; border-radius:10px; font-size:14px; font-weight:700; border:none; cursor:pointer; color:var(--text-sub); background:transparent; font-family:'Nunito',sans-serif; }
+.tab-btn.on { background:#fff; color:var(--text-main); box-shadow:0 1px 6px rgba(100,90,160,0.13); }
 
-        /* ── 네비 ── */
-        nav {
-            background: #fff;
-            box-shadow: 0 1px 0 var(--border);
-            position: sticky; top: 0; z-index: 40;
-        }
-        .nav-inner {
-            max-width: 480px; margin: 0 auto;
-            padding: 0 18px;
-            display: flex; justify-content: space-between; align-items: center;
-            height: 62px;
-        }
-        .nav-title {
-            font-size: 20px; font-weight: 900; color: var(--text-main);
-            display: flex; align-items: center; gap: 8px;
-        }
+.wrap { max-width:480px; margin:0 auto; padding:20px 18px; }
+.stack > * + * { margin-top:16px; }
+.card { background:var(--surface); border-radius:18px; border:1px solid var(--border); box-shadow:var(--shadow); padding:16px; }
 
-        /* ── 탭 버튼 ── */
-        .tab-group {
-            display: flex; background: #ede9f8;
-            border-radius: 14px; padding: 4px; gap: 2px;
-        }
-        .tab-btn {
-            padding: 7px 20px; border-radius: 10px;
-            font-size: 14px; font-weight: 700;
-            border: none; cursor: pointer;
-            color: var(--text-sub); background: transparent;
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: #fff; color: var(--text-main);
-            box-shadow: 0 1px 6px rgba(100,90,160,0.13);
-        }
+.add-row { display:flex; gap:10px; }
+.add-input { flex:1; min-width:0; background:#f3f1fb; border:1px solid #e0ddf5; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:600; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; }
+.add-input::placeholder { color:#b0aac8; }
+.add-input:focus { border-color:var(--primary); }
+.add-btn { flex-shrink:0; background:var(--primary-btn); color:#fff; border:none; border-radius:12px; padding:11px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; font-family:'Nunito',sans-serif; }
 
-        /* ── 탭 패널 ── */
-        .tab-panel { display: none !important; }
-        .tab-panel.active { display: block !important; }
+.total-card { background:linear-gradient(135deg,#b8b0e4,#a0b8e8); border-radius:22px; padding:24px 22px 20px; position:relative; overflow:hidden; }
+.total-card::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(255,255,255,0.12); border-radius:50%; }
+.total-label { font-size:11px; font-weight:800; letter-spacing:0.12em; color:rgba(255,255,255,0.75); margin-bottom:4px; }
+.total-time { font-size:42px; font-weight:900; color:#fff; line-height:1.1; }
+.total-note { font-size:12px; color:rgba(255,255,255,0.7); margin-top:10px; display:flex; align-items:center; gap:6px; }
 
-        /* ── 메인 래퍼 ── */
-        .main-wrap {
-            max-width: 480px; margin: 0 auto;
-            padding: 20px 18px;
-        }
-        .stack { display: flex; flex-direction: column; gap: 16px; }
+.sec-title { font-size:15px; font-weight:800; color:var(--text-main); margin-bottom:12px; }
 
-        /* ── 카드 공통 ── */
-        .card {
-            background: var(--surface);
-            border-radius: 18px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border);
-            padding: 16px;
-        }
+.task-card { background:var(--surface); border-radius:18px; padding:14px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:10px; }
+.task-card:last-child { margin-bottom:0; }
+.task-left { display:flex; align-items:center; flex:1; min-width:0; }
+.task-bar { width:5px; height:30px; border-radius:3px; margin-right:12px; flex-shrink:0; }
+.task-name { font-size:15px; font-weight:800; color:var(--text-main); }
+.task-time-label { font-size:12px; color:var(--text-sub); margin-top:2px; font-weight:600; }
+.task-actions { display:flex; align-items:center; gap:6px; margin-left:8px; flex-shrink:0; }
+.btn-i { width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.btn-edit { background:#f3f1fb; color:#a09ac0; }
+.btn-del { background:#fdf0f0; color:#e09090; }
+.btn-play { width:42px; height:34px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
-        /* ── 추가 인풋 ── */
-        .add-row { display: flex; gap: 10px; }
-        .add-input {
-            flex: 1; min-width: 0;
-            background: #f3f1fb; border: 1px solid #e0ddf5;
-            border-radius: 12px; padding: 11px 16px;
-            font-size: 14px; font-weight: 600; color: var(--text-main);
-            outline: none;
-        }
-        .add-input::placeholder { color: #b0aac8; font-weight: 500; }
-        .add-input:focus { border-color: var(--primary); }
-        .add-btn {
-            flex-shrink: 0;
-            background: var(--primary-btn); color: white;
-            border: none; border-radius: 12px;
-            padding: 11px 22px; font-size: 14px; font-weight: 800;
-            cursor: pointer; white-space: nowrap;
-        }
-        .add-btn:active { opacity: 0.85; }
+.empty { text-align:center; padding:48px 0; color:var(--text-sub); }
+.empty i { font-size:36px; margin-bottom:12px; display:block; }
+.empty p { font-size:13px; font-weight:600; line-height:1.7; }
 
-        /* ── TODAY TOTAL ── */
-        .total-card {
-            background: linear-gradient(135deg, #b8b0e4 0%, #a0b8e8 100%);
-            border-radius: 22px; padding: 24px 22px 20px;
-            position: relative; overflow: hidden;
-        }
-        .total-card::before {
-            content: ''; position: absolute;
-            top: -30px; right: -30px;
-            width: 120px; height: 120px;
-            background: rgba(255,255,255,0.12); border-radius: 50%;
-        }
-        .total-label {
-            font-size: 11px; font-weight: 800;
-            letter-spacing: 0.12em; color: rgba(255,255,255,0.75); margin-bottom: 4px;
-        }
-        .total-time { font-size: 42px; font-weight: 900; color: #fff; line-height: 1.1; }
-        .total-note {
-            font-size: 12px; color: rgba(255,255,255,0.7);
-            margin-top: 10px; display: flex; align-items: center; gap: 6px;
-        }
+.period-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.nav-row { display:flex; align-items:center; gap:8px; }
+.date-range { font-size:11px; font-weight:800; color:var(--text-main); }
+select { background:#f3f1fb; border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; }
+.nav-btn { width:30px; height:30px; border-radius:50%; background:#f3f1fb; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-sub); font-size:10px; }
+.nav-btn:disabled { opacity:0.3; cursor:default; }
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.stat-box { background:#f3f1fb; border-radius:12px; padding:12px; text-align:center; }
+.stat-label { font-size:11px; color:var(--text-sub); font-weight:600; margin-bottom:3px; }
+.stat-val { font-size:20px; font-weight:900; color:var(--text-main); }
+.stat-val.blue { color:var(--primary); }
+.chart-wrap { position:relative; width:100%; height:220px; margin-top:14px; }
+.report-title { font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
 
-        /* ── 섹션 타이틀 ── */
-        .section-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; }
-
-        /* ── 태스크 카드 ── */
-        .task-card {
-            background: var(--surface); border-radius: 18px;
-            padding: 16px 14px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: var(--card-shadow); border: 1px solid var(--border);
-            margin-bottom: 10px;
-        }
-        .task-card:last-child { margin-bottom: 0; }
-        .task-card.running { border-color: var(--primary-light); }
-        .task-left { display: flex; align-items: center; flex: 1; min-width: 0; }
-        .task-bar { width: 5px; height: 32px; border-radius: 3px; margin-right: 12px; flex-shrink: 0; }
-        .task-name { font-size: 15px; font-weight: 800; color: var(--text-main); }
-        .task-time { font-size: 12px; color: var(--text-sub); margin-top: 2px; font-weight: 600; }
-        .task-actions { display: flex; align-items: center; gap: 6px; margin-left: 10px; flex-shrink: 0; }
-
-        .btn-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; flex-shrink: 0;
-        }
-        .btn-edit { background: #f3f1fb; color: #a09ac0; }
-        .btn-delete { background: #fdf0f0; color: #e09090; }
-        .btn-play {
-            width: 44px; height: 36px; border-radius: 10px;
-            border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-
-        /* ── 빈 상태 ── */
-        .empty-state {
-            text-align: center; padding: 48px 0; color: var(--text-sub);
-            display: none;
-        }
-        .empty-state i { font-size: 36px; margin-bottom: 12px; display: block; }
-        .empty-state p { font-size: 13px; font-weight: 600; line-height: 1.7; }
-
-        /* ── 로딩 ── */
-        #loading-screen {
-            position: fixed; inset: 0; background: white; z-index: 50;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner {
-            width: 44px; height: 44px;
-            border: 3px solid #e8e4f8; border-top-color: var(--primary);
-            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ── 리포트 ── */
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-        .stat-box { background: #f3f1fb; border-radius: 12px; padding: 12px; text-align: center; }
-        .stat-label { font-size: 11px; color: var(--text-sub); font-weight: 600; margin-bottom: 3px; }
-        .stat-value { font-size: 20px; font-weight: 900; color: var(--text-main); }
-        .stat-value.accent { color: var(--primary); }
-
-        .period-row { display: flex; justify-content: space-between; align-items: center; }
-        select {
-            background: #f3f1fb; border: 1px solid var(--border);
-            border-radius: 10px; padding: 8px 12px;
-            font-size: 13px; font-weight: 700; color: var(--text-main);
-            outline: none; font-family: 'Nunito', sans-serif;
-        }
-        .nav-row { display: flex; align-items: center; gap: 10px; }
-        .nav-btn {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: #f3f1fb; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-sub); font-size: 11px;
-        }
-        .nav-btn:disabled { opacity: 0.3; cursor: default; }
-        .date-range-text { font-size: 12px; font-weight: 800; color: var(--text-main); }
-
-        /* ── 모달 ── */
-        #edit-modal {
-            position: fixed; inset: 0;
-            background: rgba(50,45,90,0.4);
-            z-index: 50;
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.25s;
-        }
-        #edit-modal.open { opacity: 1; pointer-events: all; }
-
-        .modal-box {
-            background: white; border-radius: 22px;
-            padding: 24px;
-            width: 100%; max-width: 320px;
-            box-shadow: 0 8px 40px rgba(100,90,160,0.2);
-            transform: scale(0.95); transition: transform 0.25s;
-        }
-        #edit-modal.open .modal-box { transform: scale(1); }
-
-        .modal-title { font-size: 17px; font-weight: 900; color: var(--text-main); margin-bottom: 4px; }
-        .modal-sub { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 20px; }
-        .modal-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; display: block; }
-        .modal-field { margin-bottom: 14px; }
-
-        .modal-input {
-            width: 100%;
-            background: #f3f1fb; border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            font-size: 15px; font-weight: 700; color: var(--text-main);
-            outline: none; font-family: 'Nunito', sans-serif;
-            text-align: center;
-        }
-        .modal-input:focus { border-color: var(--primary); }
-
-        /* 아이폰 date input 완전 제어 */
-        input[type="date"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-        }
-        input[type="date"]::-webkit-date-and-time-value {
-            text-align: center;
-        }
-
-        .time-row { display: flex; align-items: center; gap: 8px; }
-        .time-row .modal-input { flex: 1; }
-        .time-unit { font-size: 14px; font-weight: 700; color: var(--text-sub); flex-shrink: 0; }
-
-        input[type="number"] { -moz-appearance: textfield; }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
-        .btn-cancel {
-            flex: 1; background: #f3f1fb; color: var(--text-sub);
-            border: none; border-radius: 12px; padding: 12px;
-            font-size: 14px; font-weight: 800; cursor: pointer;
-            font-family: 'Nunito', sans-serif;
-        }
-        .btn-save {
-            flex: 1; background: var(--primary-btn); color: white;
-            border: none; border-radius: 12px; padding: 12px;
-            font-size: 14px; font-weight: 800; cursor: pointer;
-            font-family: 'Nunito', sans-serif;
-        }
-        .btn-save:active { background: var(--primary); }
-    </style>
+#edit-modal { position:fixed; inset:0; background:rgba(50,45,90,0.4); z-index:50; display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+#edit-modal.open { opacity:1; pointer-events:all; }
+.modal-box { background:#fff; border-radius:22px; padding:24px; width:100%; max-width:300px; box-shadow:0 8px 40px rgba(100,90,160,0.2); transform:scale(0.95); transition:transform 0.2s; }
+#edit-modal.open .modal-box { transform:scale(1); }
+.modal-title { font-size:17px; font-weight:900; color:var(--text-main); margin-bottom:4px; }
+.modal-sub { font-size:12px; color:var(--text-sub); font-weight:600; margin-bottom:20px; }
+.modal-label { font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:6px; display:block; }
+.modal-field { margin-bottom:14px; }
+.m-input { display:block; width:100%; background:#f3f1fb; border:1px solid var(--border); border-radius:12px; padding:12px; font-size:15px; font-weight:700; color:var(--text-main); outline:none; font-family:'Nunito',sans-serif; text-align:center; -webkit-appearance:none; appearance:none; }
+.m-input:focus { border-color:var(--primary); }
+input[type=number] { -moz-appearance:textfield; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+.time-row { display:flex; align-items:center; gap:8px; }
+.time-unit { font-size:14px; font-weight:700; color:var(--text-sub); flex-shrink:0; }
+.modal-btns { display:flex; gap:10px; margin-top:22px; }
+.btn-cancel { flex:1; background:#f3f1fb; color:var(--text-sub); border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; font-family:'Nunito',sans-serif; }
+.btn-save { flex:1; background:var(--primary-btn); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; font-family:'Nunito',sans-serif; }
+</style>
 </head>
 <body>
 
 <div id="loading-screen">
     <div class="spinner"></div>
-    <p style="color:var(--text-sub);font-size:14px;font-weight:700;">데이터 불러오는 중...</p>
+    <p style="color:var(--text-sub);font-size:14px;font-weight:700">데이터 불러오는 중...</p>
 </div>
 
 <nav>
     <div class="nav-inner">
-        <div class="nav-title">
-            <i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> 마이 트래커
-        </div>
+        <div class="nav-title"><i class="fa-solid fa-stopwatch" style="color:var(--primary)"></i> 마이 트래커</div>
         <div class="tab-group">
-            <button class="tab-btn active" onclick="switchTab('tracker')">트래커</button>
-            <button class="tab-btn" onclick="switchTab('stats')">리포트</button>
+            <button class="tab-btn" id="btn-tracker" onclick="showTab('tracker')">트래커</button>
+            <button class="tab-btn" id="btn-stats" onclick="showTab('stats')">리포트</button>
         </div>
     </div>
 </nav>
 
-<div class="main-wrap">
-
-    <!-- 트래커 탭 -->
-    <div id="tab-tracker" class="tab-panel active">
-        <div class="stack">
-            <div class="card">
-                <div class="add-row">
-                    <input type="text" id="task-input" class="add-input"
-                        placeholder="새로운 목표를 쓰세요 (예: 독서)"
-                        onkeypress="if(event.key==='Enter') addTask()">
-                    <button class="add-btn" onclick="addTask()">추가</button>
-                </div>
+<div class="wrap">
+    <div id="tab-tracker" class="stack" style="display:none">
+        <div class="card">
+            <div class="add-row">
+                <input type="text" id="task-input" class="add-input" placeholder="새로운 목표를 쓰세요 (예: 독서)" onkeydown="if(event.key==='Enter')addTask()">
+                <button class="add-btn" onclick="addTask()">추가</button>
             </div>
-
-            <div class="total-card">
-                <p class="total-label">TODAY TOTAL</p>
-                <div id="today-total-time" class="total-time">0분</div>
-                <p class="total-note">
-                    <i class="fa-solid fa-cloud" style="font-size:12px;"></i>
-                    초 단위까지 안전하게 저장됩니다.
-                </p>
-            </div>
-
-            <div>
-                <p class="section-title">오늘의 목표 목록</p>
-                <div id="task-list"></div>
-                <div id="empty-state" class="empty-state">
-                    <i class="fa-regular fa-clipboard"></i>
-                    <p>등록된 목표가 없습니다.<br>위에서 새로운 목표를 추가해 보세요!</p>
-                </div>
+        </div>
+        <div class="total-card">
+            <p class="total-label">TODAY TOTAL</p>
+            <div id="today-total" class="total-time">0분</div>
+            <p class="total-note"><i class="fa-solid fa-cloud" style="font-size:12px"></i> 초 단위까지 안전하게 저장됩니다.</p>
+        </div>
+        <div>
+            <p class="sec-title">오늘의 목표 목록</p>
+            <div id="task-list"></div>
+            <div id="empty" class="empty" style="display:none">
+                <i class="fa-regular fa-clipboard"></i>
+                <p>등록된 목표가 없습니다.<br>위에서 새로운 목표를 추가해 보세요!</p>
             </div>
         </div>
     </div>
 
-    <!-- 리포트 탭 -->
-    <div id="tab-stats" class="tab-panel">
-        <div class="stack">
-            <div class="card">
-                <div class="period-row">
-                    <select id="stats-period" onchange="changePeriod()">
-                        <option value="weekly">주간 리포트</option>
-                        <option value="monthly">월간 리포트</option>
-                    </select>
-                    <div class="nav-row">
-                        <button class="nav-btn" onclick="navigateDate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="stats-date-range" class="date-range-text"></span>
-                        <button class="nav-btn" id="next-date-btn" onclick="navigateDate(1)"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-                </div>
-                <div class="stat-grid">
-                    <div class="stat-box">
-                        <p class="stat-label">해당 기간 총합</p>
-                        <p id="stats-summary-total" class="stat-value">0분</p>
-                    </div>
-                    <div class="stat-box">
-                        <p class="stat-label">하루 평균 집중</p>
-                        <p id="stats-summary-avg" class="stat-value accent">0분</p>
-                    </div>
+    <div id="tab-stats" class="stack" style="display:none">
+        <div class="card">
+            <div class="period-row">
+                <select id="stats-period" onchange="changePeriod()">
+                    <option value="weekly">주간 리포트</option>
+                    <option value="monthly">월간 리포트</option>
+                </select>
+                <div class="nav-row">
+                    <button class="nav-btn" id="prev-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="date-range" class="date-range"></span>
+                    <button class="nav-btn" id="next-btn"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-
-            <div class="card">
-                <p style="font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-                    <i class="fa-solid fa-chart-bar" style="color:var(--primary);"></i> 집중 시간 그래프
-                </p>
-                <div style="position:relative;width:100%;height:220px;">
-                    <canvas id="statsChart"></canvas>
-                </div>
-            </div>
-
-            <div class="card">
-                <p style="font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-                    <i class="fa-solid fa-list-pie" style="color:var(--primary);"></i> 목표별 상세 누적
-                </p>
-                <div id="stats-task-breakdown"></div>
+            <div class="stat-grid">
+                <div class="stat-box"><p class="stat-label">해당 기간 총합</p><p id="stat-total" class="stat-val">0분</p></div>
+                <div class="stat-box"><p class="stat-label">하루 평균 집중</p><p id="stat-avg" class="stat-val blue">0분</p></div>
             </div>
         </div>
+        <div class="card">
+            <p class="report-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary)"></i> 집중 시간 그래프</p>
+            <div class="chart-wrap"><canvas id="myChart"></canvas></div>
+        </div>
+        <div class="card">
+            <p class="report-title"><i class="fa-solid fa-list-pie" style="color:var(--primary)"></i> 목표별 상세 누적</p>
+            <div id="breakdown"></div>
+        </div>
     </div>
-
 </div>
 
-<!-- 모달 -->
 <div id="edit-modal">
     <div class="modal-box">
-        <p class="modal-title" id="modal-task-title">기록 수정</p>
+        <p class="modal-title" id="modal-title">시간 추가</p>
         <p class="modal-sub">직접 분 단위로 기록을 수정할 수 있습니다.</p>
-
         <div class="modal-field">
             <label class="modal-label">날짜 선택</label>
-            <input type="date" id="modal-date-picker" onchange="onModalDateChange()"
-                style="width:100%;max-width:100%;box-sizing:border-box;background:#f3f1fb;border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:14px;font-weight:700;color:var(--text-main);outline:none;font-family:'Nunito',sans-serif;text-align:center;-webkit-appearance:none;appearance:none;display:block;">
+            <input type="date" id="modal-date" class="m-input" onchange="onDateChange()">
         </div>
-
         <div class="modal-field">
             <label class="modal-label">최종 집중 시간 (분)</label>
             <div class="time-row">
-                <input type="number" id="modal-time-input" class="modal-input" min="0" placeholder="0"
-                    onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') saveModalChanges()">
+                <input type="number" id="modal-mins" class="m-input" min="0" placeholder="0" onfocus="this.select()" onkeydown="if(event.key==='Enter')saveModal()">
                 <span class="time-unit">분</span>
             </div>
         </div>
-
         <div class="modal-btns">
             <button class="btn-cancel" onclick="closeModal()">취소</button>
-            <button class="btn-save" onclick="saveModalChanges()">저장하기</button>
+            <button class="btn-save" onclick="saveModal()">저장하기</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ── 파스텔 팔레트 ──
-    const pastelPalette = [
-        { id: 'pink',     hex: '#F9A8B8', dark: '#9a3050' },
-        { id: 'peach',    hex: '#FDD9B5', dark: '#9a5820' },
-        { id: 'mint',     hex: '#B8EAC8', dark: '#206840' },
-        { id: 'skyblue',  hex: '#C8E4F8', dark: '#2a5a90' },
-        { id: 'lilac',    hex: '#E8B8F0', dark: '#6a2880' },
-        { id: 'lavender', hex: '#D4C8F0', dark: '#3a2880' },
-        { id: 'blue',     hex: '#A8D8F8', dark: '#1a5888' },
-        { id: 'beige',    hex: '#E8E0D0', dark: '#6a5a40' },
-        { id: 'blush',    hex: '#F8C8C8', dark: '#8a3030' },
-        { id: 'silver',   hex: '#D0D4D8', dark: '#485060' },
-    ];
+var PALETTE=[
+    {id:'pink',hex:'#F9A8B8',dark:'#9a3050'},{id:'peach',hex:'#FDD9B5',dark:'#9a5820'},
+    {id:'mint',hex:'#B8EAC8',dark:'#206840'},{id:'skyblue',hex:'#C8E4F8',dark:'#2a5a90'},
+    {id:'lilac',hex:'#E8B8F0',dark:'#6a2880'},{id:'lavender',hex:'#D4C8F0',dark:'#3a2880'},
+    {id:'blue',hex:'#A8D8F8',dark:'#1a5888'},{id:'beige',hex:'#E8E0D0',dark:'#6a5a40'},
+    {id:'blush',hex:'#F8C8C8',dark:'#8a3030'},{id:'silver',hex:'#D0D4D8',dark:'#485060'}
+];
+var CC={};
+function getColor(t){
+    if(t.colorId){var f=PALETTE.find(function(p){return p.id===t.colorId;});if(f)return f;}
+    if(CC[t.id])return CC[t.id];
+    var h=0,s=t.id||t.name||'';
+    for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
+    CC[t.id]=PALETTE[Math.abs(h)%PALETTE.length];return CC[t.id];
+}
 
-    const taskColorCache = {};
-    function getTaskColor(task) {
-        if (task.colorId) {
-            const f = pastelPalette.find(p => p.id === task.colorId);
-            if (f) return f;
-        }
-        if (taskColorCache[task.id]) return taskColorCache[task.id];
-        let hash = 0;
-        const str = task.id || task.name || '';
-        for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            hash |= 0;
-        }
-        const color = pastelPalette[Math.abs(hash) % pastelPalette.length];
-        taskColorCache[task.id] = color;
-        return color;
+var tasks=[],logs={},activeId=null,tmr=null,localSec=0,uid=null,myChart=null,curDate=new Date(),modalId=null;
+
+function pad(n){return String(n).padStart(2,'0');}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmtMin(m){if(!m)return '0분';var h=Math.floor(m/60),n=m%60;return h>0?h+'시간 '+n+'분':n+'분';}
+function fmtSec(s){if(!s||s<1)return '0분 0초';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),n=Math.floor(s%60);return (h>0?h+'시간 ':'')+m+'분 '+n+'초';}
+
+/* 탭 전환 */
+function showTab(id){
+    document.getElementById('tab-tracker').style.display='none';
+    document.getElementById('tab-stats').style.display='none';
+    document.getElementById('btn-tracker').classList.remove('on');
+    document.getElementById('btn-stats').classList.remove('on');
+    document.getElementById('tab-'+id).style.display='block';
+    document.getElementById('btn-'+id).classList.add('on');
+    if(id==='stats')renderStats();
+}
+
+/* Firebase 동기화 */
+function startSync(){
+    if(!uid)return;
+    db.collection('users').doc(uid).collection('tasks').onSnapshot(function(s){
+        tasks=[];s.forEach(function(d){tasks.push(Object.assign({id:d.id},d.data()));});
+        tasks.sort(function(a,b){return a.createdAt-b.createdAt;});
+        renderList();
+        if(document.getElementById('tab-stats').style.display==='block')renderStats();
+    });
+    db.collection('users').doc(uid).collection('logs').onSnapshot(function(s){
+        logs={};s.forEach(function(d){logs[d.id]=d.data();});
+        updateTotal();renderList();
+        if(document.getElementById('tab-stats').style.display==='block')renderStats();
+        document.getElementById('loading-screen').style.display='none';
+    });
+}
+
+/* 목록 렌더 */
+function renderList(){
+    var list=document.getElementById('task-list');
+    var empty=document.getElementById('empty');
+    list.innerHTML='';
+    if(tasks.length===0){empty.style.display='block';return;}
+    empty.style.display='none';
+    var tl=logs[todayStr()]||{};
+    tasks.forEach(function(task){
+        var c=getColor(task);
+        var s=typeof tl[task.id]==='number'?tl[task.id]:0;
+        var isRun=activeId===task.id;
+        var rt=isRun?s+localSec:s;
+        var div=document.createElement('div');
+        div.className='task-card';
+        div.innerHTML=
+            '<div class="task-left">'+
+                '<div class="task-bar" style="background:'+c.hex+'"></div>'+
+                '<div style="min-width:0">'+
+                    '<p class="task-name">'+task.name+'</p>'+
+                    '<p class="task-time-label">오늘 누적: <span id="td-'+task.id+'" style="font-weight:800;color:'+(isRun?c.dark:'#7a72a8')+'">'+fmtSec(rt)+(isRun?' ⏱️':'')+'</span></p>'+
+                '</div>'+
+            '</div>'+
+            '<div class="task-actions">'+
+                '<button class="btn-i btn-edit" onclick="openModal(\''+task.id+'\',\''+task.name.replace(/'/g,"\\'")+'\')"><i class="fa-solid fa-pen" style="font-size:11px"></i></button>'+
+                '<button class="btn-i btn-del" onclick="delTask(\''+task.id+'\',\''+task.name.replace(/'/g,"\\'")+'\')"><i class="fa-solid fa-trash" style="font-size:11px"></i></button>'+
+                '<button class="btn-play" style="background:'+(isRun?'#FDD9B5':c.hex)+'" onclick="toggleTimer(\''+task.id+'\')"><i class="fa-solid '+(isRun?'fa-pause':'fa-play')+'" style="color:'+(isRun?'#9a5820':c.dark)+';font-size:11px"></i></button>'+
+            '</div>';
+        list.appendChild(div);
+    });
+}
+
+function addTask(){
+    var inp=document.getElementById('task-input'),name=inp.value.trim();
+    if(!name||!uid)return;
+    db.collection('users').doc(uid).collection('tasks').add({name:name,colorId:PALETTE[Math.floor(Math.random()*PALETTE.length)].id,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    inp.value='';
+}
+function delTask(id,name){
+    if(!confirm("'"+name+"' 목표를 삭제할까요?"))return;
+    if(activeId===id)toggleTimer(id);
+    db.collection('users').doc(uid).collection('tasks').doc(id).delete();
+}
+function toggleTimer(id){
+    var td=todayStr();
+    if(activeId!==null){clearInterval(tmr);if(localSec>0){saveSec(td,activeId,localSec);localSec=0;}}
+    if(activeId===id){activeId=null;renderList();return;}
+    activeId=id;localSec=0;renderList();
+    tmr=setInterval(function(){
+        localSec++;
+        var task=tasks.find(function(t){return t.id===id;});if(!task)return;
+        var c=getColor(task),es=(logs[td]||{})[id]||0,rt=es+localSec;
+        var el=document.getElementById('td-'+id);
+        if(el){el.style.color=c.dark;el.textContent=fmtSec(rt)+' ⏱️';}
+        if(rt%60===0)updateTotal();
+    },1000);
+}
+function saveSec(ds,tid,sec){
+    if(!uid)return;
+    var ref=db.collection('users').doc(uid).collection('logs').doc(ds);
+    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){var d=doc.exists?doc.data():{};d[tid]=(typeof d[tid]==='number'?d[tid]:0)+sec;tx.set(ref,d);});});
+}
+function updateTotal(){
+    var tl=logs[todayStr()]||{},tot=0;
+    Object.values(tl).forEach(function(v){if(typeof v==='number')tot+=v;});
+    if(activeId)tot+=localSec;
+    document.getElementById('today-total').textContent=fmtMin(Math.floor(tot/60));
+}
+
+/* 모달 */
+function openModal(id,name){
+    modalId=id;
+    document.getElementById('modal-title').textContent='['+name+'] 시간 추가';
+    document.getElementById('modal-date').value=todayStr();
+    onDateChange();
+    document.getElementById('edit-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('edit-modal').classList.remove('open');modalId=null;}
+function onDateChange(){
+    var dt=document.getElementById('modal-date').value;if(!dt)return;
+    document.getElementById('modal-mins').value=Math.round(((logs[dt]||{})[modalId]||0)/60);
+}
+function saveModal(){
+    var dt=document.getElementById('modal-date').value,m=parseInt(document.getElementById('modal-mins').value,10);
+    if(!dt||isNaN(m)||m<0||!uid)return;
+    var ref=db.collection('users').doc(uid).collection('logs').doc(dt);
+    db.runTransaction(function(tx){return tx.get(ref).then(function(doc){var d=doc.exists?doc.data():{};if(m===0)delete d[modalId];else d[modalId]=m*60;tx.set(ref,d);});}).then(function(){closeModal();});
+}
+
+/* 리포트 */
+function changePeriod(){curDate=new Date();renderStats();}
+function moveDate(dir){
+    var p=document.getElementById('stats-period').value;
+    if(p==='weekly')curDate.setDate(curDate.getDate()+dir*7);
+    else curDate.setMonth(curDate.getMonth()+dir);
+    renderStats();
+}
+function getPeriod(){
+    var p=document.getElementById('stats-period').value,labels=[],dates=[],range='';
+    if(p==='weekly'){
+        var pv=new Date(curDate),dw=pv.getDay(),mon=new Date(pv);
+        mon.setDate(pv.getDate()+(dw===0?-6:1-dw));
+        for(var i=0;i<7;i++){var d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));labels.push(d.getDate()+'일');}
+        var last=new Date(mon);last.setDate(mon.getDate()+6);
+        range=mon.getFullYear()+'.'+pad(mon.getMonth()+1)+'.'+pad(mon.getDate())+' ~ '+last.getFullYear()+'.'+pad(last.getMonth()+1)+'.'+pad(last.getDate());
+    } else {
+        var y=curDate.getFullYear(),mo=curDate.getMonth(),days=new Date(y,mo+1,0).getDate();
+        for(var j=1;j<=days;j++){dates.push(y+'-'+pad(mo+1)+'-'+pad(j));labels.push(j+'일');}
+        range=y+'년 '+(mo+1)+'월';
     }
+    return {labels:labels,dates:dates,range:range};
+}
+function renderStats(){
+    var pd=getPeriod();
+    document.getElementById('date-range').textContent=pd.range;
+    var p=document.getElementById('stats-period').value,fut=false;
+    if(p==='weekly'){var e=new Date(curDate);e.setDate(e.getDate()+(e.getDay()===0?0:7-e.getDay()));if(e>new Date())fut=true;}
+    else{if(new Date(curDate.getFullYear(),curDate.getMonth(),1)>=new Date(new Date().getFullYear(),new Date().getMonth(),1))fut=true;}
+    document.getElementById('next-btn').disabled=fut;
+    document.getElementById('next-btn').style.opacity=fut?'0.3':'1';
 
-    // ── 상태 ──
-    let tasks = [], timeLogs = {}, activeTaskId = null;
-    let timerInterval = null, localSeconds = 0, userId = null;
-    let myChart = null, currentNavDate = new Date(), modalActiveTaskId = null;
+    var dsMap={},tots={},total=0;
+    tasks.forEach(function(t){var c=getColor(t);dsMap[t.id]={label:t.name,data:new Array(pd.dates.length).fill(0),backgroundColor:c.hex,borderRadius:5};tots[t.id]=0;});
+    pd.dates.forEach(function(ds,i){var day=logs[ds]||{};Object.keys(day).forEach(function(tid){if(dsMap[tid]&&typeof day[tid]==='number'){dsMap[tid].data[i]=Math.round(day[tid]/60);tots[tid]+=day[tid];total+=day[tid];}});});
 
-    // ── 유틸 ──
-    function getTodayString() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    function formatMinutes(m) {
-        if (!m || m === 0) return '0분';
-        const h = Math.floor(m / 60), min = m % 60;
-        return h > 0 ? `${h}시간 ${min}분` : `${min}분`;
-    }
-    function formatDisplayTime(s) {
-        if (!s || s < 1) return '0분 0초';
-        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
-        return (h > 0 ? `${h}시간 ` : '') + `${m}분 ${sec}초`;
-    }
+    document.getElementById('stat-total').textContent=fmtMin(Math.round(total/60));
+    document.getElementById('stat-avg').textContent=pd.dates.length>0?Math.round((total/60)/pd.dates.length)+'분':'0분';
 
-    // ── 탭 전환 ──
-    function switchTab(id) {
-        // 패널 전환
-        document.getElementById('tab-tracker').classList.remove('active');
-        document.getElementById('tab-stats').classList.remove('active');
-        document.getElementById('tab-' + id).classList.add('active');
+    var ctx=document.getElementById('myChart').getContext('2d');
+    if(myChart)myChart.destroy();
+    myChart=new Chart(ctx,{type:'bar',data:{labels:pd.labels,datasets:Object.values(dsMap)},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:tasks.length<=5,position:'top',labels:{boxWidth:10,font:{size:10,family:'Nunito'},color:'#8884a8'}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},color:'#8884a8'}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:10},color:'#8884a8'},grid:{color:'#f0eef8'}}}}});
 
-        // 버튼 전환
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        var btns = document.querySelectorAll('.tab-btn');
-        if (id === 'tracker') btns[0].classList.add('active');
-        else btns[1].classList.add('active');
+    var bd=document.getElementById('breakdown');bd.innerHTML='';
+    if(total===0){bd.innerHTML='<p style="text-align:center;color:var(--text-sub);font-size:13px;font-weight:600;padding:16px 0">해당 기간 내 기록된 데이터가 없습니다.</p>';return;}
+    tasks.forEach(function(t){
+        var s=tots[t.id]||0;if(!s)return;
+        var pct=Math.round((s/total)*100),c=getColor(t),row=document.createElement('div');
+        row.style.marginBottom='14px';
+        row.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+c.hex+';flex-shrink:0"></div><span style="font-size:13px;font-weight:700;color:var(--text-main)">'+t.name+'</span></div><span style="font-size:12px;font-weight:700;color:var(--text-sub)"><b style="color:var(--text-main)">'+fmtMin(Math.round(s/60))+'</b> ('+pct+'%)</span></div><div style="width:100%;background:#f0eef8;border-radius:6px;height:8px;overflow:hidden"><div style="width:'+pct+'%;background:'+c.hex+';height:100%;border-radius:6px"></div></div>';
+        bd.appendChild(row);
+    });
+}
 
-        if (id === 'stats') renderStatistics();
-    }
+/* 버튼 이벤트 */
+document.getElementById('prev-btn').addEventListener('click',function(){moveDate(-1);});
+document.getElementById('next-btn').addEventListener('click',function(){moveDate(1);});
 
-    // ── Firebase 실시간 동기화 ──
-    function setupRealtimeSync() {
-        if (!userId) return;
-        db.collection('users').doc(userId).collection('tasks').onSnapshot(function(snap) {
-            tasks = [];
-            snap.forEach(function(doc) { tasks.push(Object.assign({ id: doc.id }, doc.data())); });
-            tasks.sort(function(a, b) { return a.createdAt - b.createdAt; });
-            renderTaskList();
-            if (document.getElementById('tab-stats').classList.contains('active')) renderStatistics();
-        });
-        db.collection('users').doc(userId).collection('logs').onSnapshot(function(snap) {
-            timeLogs = {};
-            snap.forEach(function(doc) { timeLogs[doc.id] = doc.data(); });
-            updateTodayDashboard();
-            renderTaskList();
-            if (document.getElementById('tab-stats').classList.contains('active')) renderStatistics();
-            document.getElementById('loading-screen').style.display = 'none';
-        });
-    }
+/* Firebase */
+var firebaseConfig={
+    apiKey:"AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
+    authDomain:"mytimetracker-eae2d.firebaseapp.com",
+    projectId:"mytimetracker-eae2d",
+    storageBucket:"mytimetracker-eae2d.firebasestorage.app",
+    messagingSenderId:"517418710325",
+    appId:"1:517418710325:web:d19bbdd1eb9363a038c87c"
+};
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/MyTimeTracker/sw.js');});}
+firebase.initializeApp(firebaseConfig);
+var db=firebase.firestore();
+firebase.auth().signInAnonymously()
+    .then(function(c){uid=c.user.uid;startSync();})
+    .catch(function(e){console.error(e);alert('Firebase 연결 실패');});
 
-    // ── 태스크 렌더 ──
-    function renderTaskList() {
-        var list = document.getElementById('task-list');
-        var empty = document.getElementById('empty-state');
-        list.innerHTML = '';
-
-        if (tasks.length === 0) {
-            empty.style.display = 'block';
-            return;
-        }
-        empty.style.display = 'none';
-
-        var todayLogs = timeLogs[getTodayString()] || {};
-        tasks.forEach(function(task) {
-            var color = getTaskColor(task);
-            var secs = todayLogs[task.id] || 0;
-            var totalSecs = typeof secs === 'number' ? secs : 0;
-            var isRunning = activeTaskId === task.id;
-            var realtimeSecs = isRunning ? totalSecs + localSeconds : totalSecs;
-
-            var timeText = formatDisplayTime(realtimeSecs);
-            var timeColor = isRunning ? color.dark : '#7a72a8';
-            var playBg = isRunning ? '#FDD9B5' : color.hex;
-            var playIcon = isRunning ? 'fa-pause' : 'fa-play';
-            var playIconColor = isRunning ? '#9a5820' : color.dark;
-
-            var card = document.createElement('div');
-            card.className = 'task-card' + (isRunning ? ' running' : '');
-            card.innerHTML =
-                '<div class="task-left">' +
-                    '<div class="task-bar" style="background:' + color.hex + ';"></div>' +
-                    '<div style="min-width:0;">' +
-                        '<p class="task-name">' + task.name + '</p>' +
-                        '<p class="task-time">오늘 누적: <span id="td-' + task.id + '" style="font-weight:800;color:' + timeColor + ';">' + timeText + '</span></p>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="task-actions">' +
-                    '<button class="btn-icon btn-edit" onclick="openEditModal(\'' + task.id + '\',\'' + task.name.replace(/'/g, "\\'") + '\')">' +
-                        '<i class="fa-solid fa-pen" style="font-size:11px;"></i>' +
-                    '</button>' +
-                    '<button class="btn-icon btn-delete" onclick="deleteTask(\'' + task.id + '\',\'' + task.name.replace(/'/g, "\\'") + '\')">' +
-                        '<i class="fa-solid fa-trash" style="font-size:11px;"></i>' +
-                    '</button>' +
-                    '<button class="btn-play" style="background:' + playBg + ';" onclick="toggleTimer(\'' + task.id + '\')">' +
-                        '<i class="fa-solid ' + playIcon + '" style="color:' + playIconColor + ';font-size:11px;"></i>' +
-                    '</button>' +
-                '</div>';
-            list.appendChild(card);
-        });
-    }
-
-    // ── 태스크 추가 ──
-    function addTask() {
-        var input = document.getElementById('task-input');
-        var name = input.value.trim();
-        if (!name || !userId) return;
-        var colorId = pastelPalette[Math.floor(Math.random() * pastelPalette.length)].id;
-        db.collection('users').doc(userId).collection('tasks').add({
-            name: name, colorId: colorId,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        input.value = '';
-    }
-
-    // ── 태스크 삭제 ──
-    function deleteTask(id, name) {
-        if (!confirm("'" + name + "' 목표를 삭제하시겠습니까?\n(기존 리포트 기록은 유지됩니다.)")) return;
-        if (activeTaskId === id) toggleTimer(id);
-        db.collection('users').doc(userId).collection('tasks').doc(id).delete();
-    }
-
-    // ── 타이머 ──
-    function toggleTimer(taskId) {
-        var todayStr = getTodayString();
-        if (activeTaskId !== null) {
-            clearInterval(timerInterval);
-            if (localSeconds > 0) {
-                saveSecondsToCloud(todayStr, activeTaskId, localSeconds);
-                localSeconds = 0;
-            }
-        }
-        if (activeTaskId === taskId) {
-            activeTaskId = null;
-            renderTaskList();
-            return;
-        }
-        activeTaskId = taskId;
-        localSeconds = 0;
-        renderTaskList();
-
-        timerInterval = setInterval(function() {
-            localSeconds++;
-            var task = tasks.find(function(t) { return t.id === taskId; });
-            if (!task) return;
-            var color = getTaskColor(task);
-            var existingSecs = (timeLogs[todayStr] || {})[taskId] || 0;
-            var rt = existingSecs + localSeconds;
-            var el = document.getElementById('td-' + taskId);
-            if (el) {
-                el.style.color = color.dark;
-                el.textContent = formatDisplayTime(rt) + ' ⏱️';
-            }
-            if (rt % 60 === 0) updateTodayDashboard();
-        }, 1000);
-    }
-
-    function saveSecondsToCloud(dateStr, taskId, addedSecs) {
-        if (!userId) return;
-        var ref = db.collection('users').doc(userId).collection('logs').doc(dateStr);
-        db.runTransaction(function(tx) {
-            return tx.get(ref).then(function(doc) {
-                var data = doc.exists ? doc.data() : {};
-                data[taskId] = (typeof data[taskId] === 'number' ? data[taskId] : 0) + addedSecs;
-                tx.set(ref, data);
-            });
-        });
-    }
-
-    function updateTodayDashboard() {
-        var logs = timeLogs[getTodayString()] || {};
-        var total = Object.values(logs).reduce(function(a, v) { return a + (typeof v === 'number' ? v : 0); }, 0);
-        if (activeTaskId) total += localSeconds;
-        document.getElementById('today-total-time').textContent = formatMinutes(Math.floor(total / 60));
-    }
-
-    // ── 모달 ──
-    function openEditModal(taskId, taskName) {
-        modalActiveTaskId = taskId;
-        document.getElementById('modal-task-title').textContent = '[' + taskName + '] 시간 수정';
-        document.getElementById('modal-date-picker').value = getTodayString();
-        onModalDateChange();
-        document.getElementById('edit-modal').classList.add('open');
-    }
-    function closeModal() {
-        document.getElementById('edit-modal').classList.remove('open');
-        modalActiveTaskId = null;
-    }
-    function onModalDateChange() {
-        var date = document.getElementById('modal-date-picker').value;
-        if (!date) return;
-        var secs = (timeLogs[date] || {})[modalActiveTaskId] || 0;
-        document.getElementById('modal-time-input').value = Math.round(secs / 60);
-    }
-    function saveModalChanges() {
-        var date = document.getElementById('modal-date-picker').value;
-        var mins = parseInt(document.getElementById('modal-time-input').value, 10);
-        if (!date || isNaN(mins) || mins < 0 || !userId) return;
-        var ref = db.collection('users').doc(userId).collection('logs').doc(date);
-        db.runTransaction(function(tx) {
-            return tx.get(ref).then(function(doc) {
-                var data = doc.exists ? doc.data() : {};
-                if (mins === 0) delete data[modalActiveTaskId];
-                else data[modalActiveTaskId] = mins * 60;
-                tx.set(ref, data);
-            });
-        }).then(function() { closeModal(); });
-    }
-
-    // ── 리포트 ──
-    function changePeriod() { currentNavDate = new Date(); renderStatistics(); }
-    function navigateDate(dir) {
-        var p = document.getElementById('stats-period').value;
-        if (p === 'weekly') currentNavDate.setDate(currentNavDate.getDate() + dir * 7);
-        else currentNavDate.setMonth(currentNavDate.getMonth() + dir);
-        renderStatistics();
-    }
-
-    function getPeriodDetails() {
-        var p = document.getElementById('stats-period').value;
-        var labels = [], dateStrings = [], displayRange = '';
-        if (p === 'weekly') {
-            var pivot = new Date(currentNavDate);
-            var dow = pivot.getDay();
-            var monday = new Date(pivot);
-            monday.setDate(pivot.getDate() + (dow === 0 ? -6 : 1 - dow));
-            for (var i = 0; i < 7; i++) {
-                var d = new Date(monday); d.setDate(monday.getDate() + i);
-                dateStrings.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'));
-                labels.push(d.getDate() + '일');
-            }
-            var last = new Date(monday); last.setDate(monday.getDate() + 6);
-            displayRange = monday.getFullYear() + '.' + String(monday.getMonth()+1).padStart(2,'0') + '.' + String(monday.getDate()).padStart(2,'0') +
-                ' ~ ' + last.getFullYear() + '.' + String(last.getMonth()+1).padStart(2,'0') + '.' + String(last.getDate()).padStart(2,'0');
-        } else {
-            var y = currentNavDate.getFullYear(), m = currentNavDate.getMonth();
-            var days = new Date(y, m + 1, 0).getDate();
-            for (var j = 1; j <= days; j++) {
-                dateStrings.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(j).padStart(2,'0'));
-                labels.push(j + '일');
-            }
-            displayRange = y + '년 ' + (m + 1) + '월';
-        }
-        return { labels: labels, dateStrings: dateStrings, displayRange: displayRange };
-    }
-
-    function renderStatistics() {
-        var det = getPeriodDetails();
-        document.getElementById('stats-date-range').textContent = det.displayRange;
-
-        var p = document.getElementById('stats-period').value;
-        var isFuture = false;
-        if (p === 'weekly') {
-            var end = new Date(currentNavDate);
-            end.setDate(end.getDate() + (end.getDay() === 0 ? 0 : 7 - end.getDay()));
-            if (end > new Date()) isFuture = true;
-        } else {
-            var check = new Date(currentNavDate.getFullYear(), currentNavDate.getMonth(), 1);
-            var now = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-            if (check >= now) isFuture = true;
-        }
-        var nextBtn = document.getElementById('next-date-btn');
-        nextBtn.disabled = isFuture;
-        nextBtn.style.opacity = isFuture ? '0.3' : '1';
-
-        var dsMap = {}, totals = {}, overall = 0;
-        tasks.forEach(function(t) {
-            var c = getTaskColor(t);
-            dsMap[t.id] = { label: t.name, data: new Array(det.dateStrings.length).fill(0), backgroundColor: c.hex, borderRadius: 5 };
-            totals[t.id] = 0;
-        });
-        det.dateStrings.forEach(function(ds, i) {
-            var day = timeLogs[ds] || {};
-            Object.keys(day).forEach(function(tid) {
-                if (dsMap[tid] && typeof day[tid] === 'number') {
-                    dsMap[tid].data[i] = Math.round(day[tid] / 60);
-                    totals[tid] += day[tid];
-                    overall += day[tid];
-                }
-            });
-        });
-
-        document.getElementById('stats-summary-total').textContent = formatMinutes(Math.round(overall / 60));
-        document.getElementById('stats-summary-avg').textContent = det.dateStrings.length > 0 ? Math.round((overall / 60) / det.dateStrings.length) + '분' : '0분';
-
-        var ctx = document.getElementById('statsChart').getContext('2d');
-        if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: det.labels, datasets: Object.values(dsMap) },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: tasks.length <= 5, position: 'top', labels: { boxWidth: 10, font: { size: 10, family: 'Nunito' }, color: '#8884a8' } } },
-                scales: {
-                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }, color: '#8884a8' } },
-                    y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 }, color: '#8884a8' }, grid: { color: '#f0eef8' } }
-                }
-            }
-        });
-
-        var breakdown = document.getElementById('stats-task-breakdown');
-        breakdown.innerHTML = '';
-        if (overall === 0) {
-            breakdown.innerHTML = '<p style="text-align:center;color:var(--text-sub);font-size:13px;font-weight:600;padding:16px 0;">해당 기간 내 기록된 데이터가 없습니다.</p>';
-            return;
-        }
-        tasks.forEach(function(t) {
-            var secs = totals[t.id] || 0;
-            if (!secs) return;
-            var pct = Math.round((secs / overall) * 100);
-            var c = getTaskColor(t);
-            var row = document.createElement('div');
-            row.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-bottom:14px;';
-            row.innerHTML =
-                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div style="display:flex;align-items:center;gap:7px;">' +
-                        '<div style="width:8px;height:8px;border-radius:50%;background:' + c.hex + ';flex-shrink:0;"></div>' +
-                        '<span style="font-size:13px;font-weight:700;color:var(--text-main);">' + t.name + '</span>' +
-                    '</div>' +
-                    '<span style="font-size:12px;font-weight:700;color:var(--text-sub);">' +
-                        '<b style="color:var(--text-main);">' + formatMinutes(Math.round(secs/60)) + '</b> (' + pct + '%)' +
-                    '</span>' +
-                '</div>' +
-                '<div style="width:100%;background:#f0eef8;border-radius:6px;height:8px;overflow:hidden;">' +
-                    '<div style="width:' + pct + '%;background:' + c.hex + ';height:100%;border-radius:6px;"></div>' +
-                '</div>';
-            breakdown.appendChild(row);
-        });
-    }
-
-    // ── Firebase ──
-    var firebaseConfig = {
-        apiKey: "AIzaSyBZiXaYf0Ns_zNNuN2cnStr-BUDrkA0afs",
-        authDomain: "mytimetracker-eae2d.firebaseapp.com",
-        projectId: "mytimetracker-eae2d",
-        storageBucket: "mytimetracker-eae2d.firebasestorage.app",
-        messagingSenderId: "517418710325",
-        appId: "1:517418710325:web:d19bbdd1eb9363a038c87c"
-    };
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/MyTimeTracker/sw.js');
-        });
-    }
-
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
-    firebase.auth().signInAnonymously()
-        .then(function(cred) { userId = cred.user.uid; setupRealtimeSync(); })
-        .catch(function(err) { console.error(err); alert('Firebase 연결 실패'); });
+/* 첫 화면: 트래커만 표시 */
+showTab('tracker');
 </script>
 </body>
 </html>
